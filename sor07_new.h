@@ -75,11 +75,7 @@ double conv   = 1332.20,              // Conversion from mmHg to SI-units.
 
        *fjac[18],                     // Work space used by bound_bif.
        xr, f, df;                     // Work space used by bound_right.
-double ind_b_diss = -1.2;
-double Area_top_diss = 151.285;
-double Area_bot_diss = 151.285;
 // double K_diss = 0.;
-double K_diss = 47.42;
 // double ahpha_a=0.9,                   // the ratio of area at stenosis
 //        ku = 1.2,                      // kv is a function, ku,kt are constant.
 //        kt = 1.5;

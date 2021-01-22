@@ -22,8 +22,7 @@
 
 extern double   conv, rho, mu, mu_pl, nu, Lr, Lr2, Lr3, g, q, Fr2,
                 Re, p0, pmean, tmst, Period, Fcst, alpha, CO, COm,
-                Deltat, tau, m1, m2, m3, m4, 
-                K_diss, ind_b_diss, Area_top_diss, Area_bot_diss, 
+                Deltat, tau, m1, m2, m3, m4,  
 	              *fjac[18], xr, f, df;
 
 // The class structure.

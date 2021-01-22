@@ -71,7 +71,7 @@ with open("generateCode.txt", "w") as f:
 
 
     f.write("\n\n  // open pressure and flow file and declare the point:\n")
-    f.write('  for(int i=0;i<nbrves;i++)\n  {\n    auto j=i+1;\n    fp[i] = fopen((nameP[i]).c_str(), "w");\n    string SuccessInfo1 = "File "+to_string(j)+"p OK \\n";\n    string FailInfo1 = "File "+to_string(j)+"p NOT OK \\n";\n    if (fp[i]) fprintf(stdout, "%s", (SuccessInfo1).c_str()); else error("main.C", (FailInfo1).c_str());\n    fq[i] = fopen((nameP[i]).c_str(), "w");\n    string SuccessInfo2 = "File "+to_string(j)+"q OK \\n";\n    string FailInfo2 = "File "+to_string(j)+"q NOT OK \\n";\n    if (fq[i]) fprintf(stdout, "%s", (SuccessInfo2).c_str()); else error("main.C", (FailInfo2).c_str());\n  }\n')
+    f.write('  for(int i=0;i<nbrves;i++)\n  {\n    auto j=i+1;\n    fp[i] = fopen((nameP[i]).c_str(), "w");\n    string SuccessInfo1 = "File "+to_string(j)+"p OK \\n";\n    string FailInfo1 = "File "+to_string(j)+"p NOT OK \\n";\n    if (fp[i]) fprintf(stdout, "%s", (SuccessInfo1).c_str()); else error("main.C", (FailInfo1).c_str());\n    fq[i] = fopen((nameQ[i]).c_str(), "w");\n    string SuccessInfo2 = "File "+to_string(j)+"q OK \\n";\n    string FailInfo2 = "File "+to_string(j)+"q NOT OK \\n";\n    if (fq[i]) fprintf(stdout, "%s", (SuccessInfo2).c_str()); else error("main.C", (FailInfo2).c_str());\n  }\n')
     if wave_flag:
         f.write(openfile(0, "A"))
         f.write(openfile(0, "C"))

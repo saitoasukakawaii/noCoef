@@ -26,14 +26,6 @@ int main(int argc, char *argv[])
   string FileName = "topology55.txt";
   set<int> ID_Out, ID_Bif;
   get_ID(FileName, ID_Out, ID_Bif);
-  for (auto i: ID_Bif)
-  {
-    fprintf(stdout,"\nThe bifurcation id is: %dth", i);
-  }
-  for (auto i: ID_Out)
-  {
-    fprintf(stdout,"\nThe Terminal id is: %dth", i);
-  }
   // pressure and flow file point name:
   vector<string> nameP(nbrves, "./result/p");
   vector<string> nameQ(nbrves, "./result/q");
@@ -57,7 +49,7 @@ int main(int argc, char *argv[])
     string SuccessInfo1 = "File "+to_string(j)+"p OK \n";
     string FailInfo1 = "File "+to_string(j)+"p NOT OK \n";
     if (fp[i]) fprintf(stdout, "%s", (SuccessInfo1).c_str()); else error("main.C", (FailInfo1).c_str());
-    fq[i] = fopen((nameP[i]).c_str(), "w");
+    fq[i] = fopen((nameQ[i]).c_str(), "w");
     string SuccessInfo2 = "File "+to_string(j)+"q OK \n";
     string FailInfo2 = "File "+to_string(j)+"q NOT OK \n";
     if (fq[i]) fprintf(stdout, "%s", (SuccessInfo2).c_str()); else error("main.C", (FailInfo2).c_str());
