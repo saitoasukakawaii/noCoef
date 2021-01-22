@@ -1,0 +1,41 @@
+No.	Artery	Rtop(cm)	Rbot(cm)	L(cm)	
+1	Ascending aorta A	1.525	1.502	1	
+2	Coronaries	0.35	0.3	10	
+3	Ascending aorta B	1.502	1.42	3	
+4	Aortic arch A	1.42	1.342	3	
+5	Brachiocephalic	0.95	0.7	3.5	
+6,19	Right & Left Subclavian	0.425	0.407	3.5	
+7	Right common Carotid	0.525	0.4	16.75	
+8, 20	Right & Left Vertebral	0.2	0.2	13.5	
+9, 21	Right & Left Brachial	0.407	0.25	39.75	
+10, 22	Right & Left Radial	0.175	0.175	22	
+11, 23	Right & Left Ulner A	0.2	0.2	17	
+12, 24	Right & Left Ulner B	0.175	0.175	22.25	
+13, 25	Right & Left Interosseus	0.1	0.1	7	
+14	Aortic arch B	1.342	1.246	4	
+15	Left common Carotid	0.525	0.4	19.25	
+16	Thoracic aorta A	1.246	1.124	5.5	
+17	Thoracic aorta B	1.124	0.924	10.5	
+18	Intercostals	0.63	0.5	7.25	
+26	Celiac axis	0.35	0.3	2	
+27	Hepatic A	0.3	0.25	2	
+28	Hepatic B	0.275	0.25	6.5	
+29	Gastric	0.175	0.15	5.75	
+30	Splenic	0.2	0.2	5.5	
+31	Abdominal aorta A	0.924	0.838	5.25	
+32	Superior mesenteric	0.4	0.35	5	
+33	Abdominal aorta B	0.838	0.814	1.5	
+34, 36	Right & Left Renal	0.275	0.275	3	
+35	Abdominal aorta C	0.814	0.792	1.5	
+37	Abdominal aorta D	0.792	0.627	12.5	
+38	Inferior mesenteric	0.2	0.175	3.75	
+39	Abdominal aorta E	0.627	0.55	8	
+40, 47	Right & Left External iliac	0.4	0.37	5.75	
+41, 48	Right & Left Femoral A	0.37	0.314	14.5	
+42, 49	Right & Left Internal iliac	0.2	0.2	4.5	
+43, 50	Right & Left Deep femoral	0.2	0.2	11.25	
+44, 51	Right & Left Femoral B	0.314	0.2	44.25	
+45, 52	Right & Left Anterior Tibal	0.125	0.125	32	
+46, 53	Right & Left Posterior tibal	0.125	0.125	32	
+54, 56	Right & Left internal carotid	0.275	0.275	15.75	
+55, 57	Right & Left external carotid	0.275	0.275	15.75	
