@@ -11,21 +11,18 @@
 
 # $Id: Makefile,v 1.8 2010-10-20 14:39:59 heine Exp $
 
-# CXX=/opt/local/bin/g++-mp-4.6
+
+
+
+# c++ compiler
 CXX = g++
+# fortran compiler
+FC = gfortran
+# loader
+LD = g++
+
 CXXFLAGS=-O3 -g -Wall -std=c++11 -D_REENTRANT
 
-# ifeq ($(shell arch),ppc)
-# FC=/usr/local/bin/g95
-# FFLAGS=-O2 -g -Wall -fno-second-underscore
-# FLIBS=-L$(shell $(FC) --print-file-name=) -lf95
-# else
-# FC=/opt/local/bin/gfortran-mp-4.6
-# FFLAGS=-O2 -g -Wall
-# FLIBS=-lgfortran
-# endif
-
-FC=gfortran
 FFLAGS=-O2 -g -Wall
 FLIBS=-lgfortran
 
@@ -39,7 +36,7 @@ OBJS1=tools.o ${MAIN}.o arteries.o
 OBJS2=impedance_sub.o impedance_init_sub.o root_imp.o f90_tools.o special_functions.o
 
 
-
+.PHONY: all
 all: $(MAIN)
 
 $(MAIN): $(OBJS1) $(OBJS2) 
@@ -72,12 +69,15 @@ impedance_sub.o: impedance_sub.f90 f90_tools.o root_imp.o
 	
 impedance_init_sub.o: impedance_init_sub.f90 f90_tools.o root_imp.o
 	$(FC) -c $(FFLAGS) impedance_init_sub.f90
-	
+
+.PHONY: clean
 clean:
-	-rm -f *.o *.mod ./result/q* ./result/p* ./result/U* ./result/A* ./result/C*
-	
+	-rm -f *.o *.mod 
+
+.PHONY: veryclean
 veryclean: clean
-	-rm $(MAIN) a.out *~
+	-rm $(MAIN) a.out *~ ./result/q* ./result/p* ./result/U* ./result/A* ./result/C*
 	
+.PHONY: run
 run: ${MAIN}
 	./${MAIN} ${ARGS}
