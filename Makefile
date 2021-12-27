@@ -23,8 +23,8 @@ LD = g++
 
 CXXFLAGS=-O3 -g -Wall -std=c++11 -D_REENTRANT
 
-FFLAGS=-O2 -g -Wall
-FLIBS=-lgfortran
+FFLAGS=-O2 -g -Wall -I/usr/local/include
+FLIBS=-lgfortran -lfftw3
 
 LIBS=$(FLIBS) -lm
 

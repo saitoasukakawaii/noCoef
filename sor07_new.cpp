@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
 
   // normal range of rmin of small vessel is 0.01~0.04
   double rm4 = 0.03;
-  int point = 8;
+  int point = 4;
   nbrves     = 55;             // The number of vessels in the network.
   string FileName = "topology55.txt";
   set<int> ID_Out, ID_Bif;
