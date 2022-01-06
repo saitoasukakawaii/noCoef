@@ -22,7 +22,7 @@ int    nbrves, N_aorta;               // Number of vessels in the tree.
 int    tmstps = 8192,                 // The number of timesteps per period.
        plts   = 1024;                 // Number of plots per period.
 
-const char *CO_filename = "input.dat";     // Input flow file at the heart.
+const char *CO_filename = "FlowProfile/masri_8192.dat";     // Input flow file at the heart.
 
 double conv   = 1332.20,              // Conversion from mmHg to SI-units.
        rho    = 1.055,                // Density of blood [g/cm^3].
