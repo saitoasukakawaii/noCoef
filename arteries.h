@@ -49,6 +49,7 @@ public:
 
   double *Qnew, *Qold, *Qh,    // The arrays needed to store data during
          *Anew, *Aold, *Ah,    // the numerical solution of the system.
+         *SLnew, *SLold,
          *R1, *R2, *R1h, *R2h,
          *S1, *S2, *S1h, *S2h,
          *Qprv, *Aprv,
