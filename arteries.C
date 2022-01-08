@@ -95,20 +95,16 @@ Tube :: Tube (double Length,
   // Declaration and Initialization of the needed intermediate arrays.
   Qnew	  = new double[N+1];
   Anew	  = new double[N+1];
-  SLnew   = new double[N+1];
   Qold	  = new double[N+1];
   Aold	  = new double[N+1];
-  SLold   = new double[N+1];
   Qprv	  = new double[N+1];
   Aprv	  = new double[N+1];
-  R1	  = new double[N+1];
-  R2	  = new double[N+1];
-  R3	  = new double[N+1];
-  S1	  = new double[N+1];
-  S2	  = new double[N+1];
-  S3	  = new double[N+1];
-  r0	  = new double[N+1];
-  r0h	  = new double[N+2];
+  R1	    = new double[N+1];
+  R2	    = new double[N+1];
+  S1	    = new double[N+1];
+  S2	    = new double[N+1];
+  r0	    = new double[N+1];
+  r0h	    = new double[N+2];
   dr0dx   = new double[N+1];
   dr0dxh  = new double[N+2];
   A0      = new double[N+1];
