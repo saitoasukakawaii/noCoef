@@ -22,7 +22,7 @@
 
 extern double   conv, rho, mu, mu_pl, nu, Lr, Lr2, Lr3, g, q, Fr2,
                 Re, p0, pmean, tmst, Period, Fcst, alpha, CO, COm,
-                Deltat, tau, m1, m2, m3, m4,  
+                Deltat, tau, m1, m2, m3, m4, Cn, invD, C_Period,
 	              *fjac[18], xr, f, df;
 
 // The class structure.
@@ -49,8 +49,11 @@ public:
 
   double *Qnew, *Qold, *Qh,    // The arrays needed to store data during
          *Anew, *Aold, *Ah,    // the numerical solution of the system.
+         *Cnew, *Cold, *Ch,
+         *dCh, *dCold, 
          *R1, *R2, *R1h, *R2h,
          *S1, *S2, *S1h, *S2h,
+         *R3, *S3, *R3h, *S3h,
          *Qprv, *Aprv,
          *pL, *y, *QL, *Q0, *Z,
 	 *r0, *r0h,
@@ -144,10 +147,10 @@ public:
 
   // Finds the flux acc. to sys. eq.
   double Rvec (int k, int i, int j, double Q, double A);
-
+  double Rvec (int k, int i, int j, double Q, double A, double C);
   // Finds the rhs. of system eq.
   double Svec (int k, int i, int j, double Q, double A);
-
+  double Svec (int k, int i, int j, double Q, double A, double C);
 
   // Steps through interior points.
   void step (double k);
@@ -193,11 +196,19 @@ inline double dFdA (double Q, double A)
 {
   return(Fcst*M_PI*Q/(sq(A)*Re));
 }
-
+inline void Update(){
+  for (int i=0; i<=N; i++)  // Remember the values at this time level.
+  {
+    Qold[i] = Qnew[i];
+    Aold[i] = Anew[i];
+    Cold[i] = Cnew[i];
+  }
+}
 private:
   // The private function Q0 may only be accessed from the left boundary
   // function. It ensures a certain and given CO (defined in main.h).
   double Q0_init (double t, double k, double Period);
+  double C0(double t);
 };
 
 void solver (Tube *Arteries[], double tstart, double tend, double k, set<int>& ID_Out, set<int>& ID_Bif);

@@ -53,11 +53,12 @@ double conv   = 1332.20,              // Conversion from mmHg to SI-units.
        m2     = 1.2122,
        m3     = 5.6517,
        m4     = 0.21763,
-
+       
+       alpha  = 1.1,                  // flow profile
        //Fcst = 10.0,                 // Determines the damping coeff.
-       Fcst   = 22, //17.7778,        // Determines the damping coeff.
+       Fcst   = 2*alpha/(alpha-1), //17.7778,        // Determines the damping coeff.
                                       // for the friction.
-       alpha  = 4./3,
+       
        Lr     = 1.0,                  // Characteristic radius of the
                                       // vessels in the tree [cm].
        Lr2    = sq(Lr),               // The squared radius [cm2].
@@ -67,11 +68,16 @@ double conv   = 1332.20,              // Conversion from mmHg to SI-units.
        Fr2    = sq(q)/g/pow(Lr,5),    // The squared Froudes number.
        Re     = q*rho/mu/Lr,          // Reynolds number.
        Period = Tper*q/Lr3,           // The dimension-less period.
+       C_Period = 0.2*q/Lr3,
        tau    = 0.08*q/Lr3,           // End of pulse, dimension-less.
        k      = Period/tmstps,        // Length of a timestep.
        Deltat = Period/plts,          // Interval between each point plottet.
        // p0     = 55.0/rho/g/Lr*conv,   // Ensures a certain diastolic pressure.
         p0     = 55./rho/g/Lr*conv,   // Ensures a certain diastolic pressure.
+
+       D_d    = 0.02,                 // cm^2/s
+       invD   = sq(alpha-1)*q/Lr/D_d/2/alpha/(3*alpha-2),
+       Cn     = 1.,
 
        *fjac[18],                     // Work space used by bound_bif.
        xr, f, df;                     // Work space used by bound_right.

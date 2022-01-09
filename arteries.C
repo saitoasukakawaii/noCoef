@@ -95,16 +95,22 @@ Tube :: Tube (double Length,
   // Declaration and Initialization of the needed intermediate arrays.
   Qnew	  = new double[N+1];
   Anew	  = new double[N+1];
+  Cnew	  = new double[N+1];
   Qold	  = new double[N+1];
   Aold	  = new double[N+1];
+  Cold	  = new double[N+1];
+  // dCnew	  = new double[N+1];
+  dCold	  = new double[N+1];
   Qprv	  = new double[N+1];
   Aprv	  = new double[N+1];
-  R1	  = new double[N+1];
-  R2	  = new double[N+1];
-  S1	  = new double[N+1];
-  S2	  = new double[N+1];
-  r0	  = new double[N+1];
-  r0h	  = new double[N+2];
+  R1	    = new double[N+1];
+  R2	    = new double[N+1];
+  R3	    = new double[N+1];
+  S1	    = new double[N+1];
+  S2	    = new double[N+1];
+  S3	    = new double[N+1];
+  r0	    = new double[N+1];
+  r0h	    = new double[N+2];
   dr0dx   = new double[N+1];
   dr0dxh  = new double[N+2];
   A0      = new double[N+1];
@@ -117,14 +123,18 @@ Tube :: Tube (double Length,
   p1h     = new double[N+2];
   dp1dr0  = new double[N+1];
   dp1dr0h = new double[N+2];
-  Ah	  = new double[N];
-  Qh	  = new double[N];
-  R1h	  = new double[N];
-  R2h	  = new double[N];
-  S1h	  = new double[N];
-  S2h	  = new double[N];
-  pL	  = new double[tmstps];
-  y	  = new double[tmstps];
+  Ah	    = new double[N];
+  Qh	    = new double[N];
+  Ch	    = new double[N];
+  dCh	    = new double[N];
+  R1h	    = new double[N];
+  R2h	    = new double[N];
+  R3h	    = new double[N];
+  S1h	    = new double[N];
+  S2h	    = new double[N];
+  S3h	    = new double[N];
+  pL	    = new double[tmstps];
+  y	      = new double[tmstps];
 
   double rgLr  = 4/3/rho/g/Lr;
   double rgLr2 = 4/3/rho/g/Lr2;
@@ -148,6 +158,9 @@ Tube :: Tube (double Length,
     dp1dr0h[i] = dfrdr0h[i]/M_PI;
     Qnew[i]    = 1.0;
     Anew[i]    = A0[i];
+    Cnew[i]    = 0.1;
+    dCold[i]   = 0;
+    dCnew[i]   = 0;
   }
   r0h[N+1]     = rtop*exp((N+0.5)*log(rbot/rtop)/N)/Lr;
   dr0dxh[N+1]  = log(rbot/rtop)/h/N*r0h[N+1];
@@ -553,9 +566,18 @@ double Tube :: Rvec (int k, int i, int j, double Q, double A)
   if(k==1) return(Q); else
   if(k==2) return(sq(Q)/A + ((j==0)?B(i,A):Bh(i,A)));
   else error ("arteries.cxx","Call of non-existing vector-component of R");
-  return(0);double ind_b_diss = -1.2;
-double Area_top_diss = 1.51285/Lr2;
-double Area_bot_diss = 1.51285/Lr2;
+  return(0);
+}
+
+double Tube :: Rvec (int k, int i, int j, double Q, double A, double C)
+{
+  
+  if(k==3) {
+    if (j==0) return Q*C-invD*sq(Q)*dC(sq(Q)/A + ((j==0)?B(i,A):Bh(i,A)));
+    else return(sq(Q)/A + ((j==0)?B(i,A):Bh(i,A)));
+  }
+  else error ("arteries.cxx","Call of non-existing vector-component of R for C");
+  return(0);
 }
 
 // Similarly the right hand side of the system of equations must be determined
@@ -570,29 +592,33 @@ double Tube :: Svec (int k, int i, int j, double Q, double A)
   return(0);
 }
 
+double Tube :: Svec (int k, int i, int j, double Q, double A, double C)
+{
+  if(k==3) return 0;
+  else error ("arteries.cxx","Call of non-existing vector-component of S for C");
+  return(0);
+}
 // The solutions of Anew and Qnew are found for all interior points
 // of the vessel at (t+k), where k is the length of the current
 // time-step. This function saves the results in the arrays Anew and
 // Qnew, and the function is made according to Lax-Wendroff's method
 // as described in IMFUFATEKST no 297 and D2.1-4.
-void Tube :: step (double k)
+void Tube :: step1 (double k)
 {
   double theta = k/h;  // Theta is determined.
   double gamma = 0.5*k;  // Gamma is determined.
 
-  for (int i=0; i<=N; i++)  // Remember the values at this time level.
-  {
-    Qold[i] = Qnew[i];
-    Aold[i] = Anew[i];
-  }
+  
 
   // Anew and Qnew are predicted at the new time level (t+k).
   for (int i=0; i<=N; i++)
   {
     R1[i] = Rvec(1,i,0,Qold[i],Aold[i]);
     R2[i] = Rvec(2,i,0,Qold[i],Aold[i]);
+    R3[i] = Rvec(3,i,0,Qold[i],Aold[i],Cold[i]);
     S1[i] = Svec(1,i,0,Qold[i],Aold[i]);
     S2[i] = Svec(2,i,0,Qold[i],Aold[i]);
+    S3[i] = Svec(3,i,0,Qold[i],Aold[i],Cold[i]);
   }
 
   for (int i=0; i<N; i++)
@@ -601,18 +627,35 @@ void Tube :: step (double k)
 	     0.5*gamma*(S1[i+1]+S1[i]);
     Qh[i]  = 0.5*(Qold[i+1]+Qold[i]) - 0.5*theta*(R2[i+1]-R2[i]) +
 	     0.5*gamma*(S2[i+1]+S2[i]);
+    Ch[i]  = (0.5*(Aold[i+1]*Cold[i+1]+Aold[i]*Cold[i]) - 0.5*theta*(R3[i+1]-R3[i]) +
+	     0.5*gamma*(S3[i+1]+S3[i]))/Ah[i];
     R1h[i] = Rvec(1,i,1,Qh[i],Ah[i]);
     R2h[i] = Rvec(2,i,1,Qh[i],Ah[i]);
+    R3h[i] = Rvec(3,i,1,Qh[i],Ah[i],Ch[i]);
     S1h[i] = Svec(1,i,1,Qh[i],Ah[i]);
     S2h[i] = Svec(2,i,1,Qh[i],Ah[i]);
+    S3h[i] = Svec(3,i,1,Qh[i],Ah[i],Ch[i]);
   }
   for (int i=1; i<N; i++)
   {
     Anew[i] = Aold[i] - theta*(R1h[i]-R1h[i-1]) + gamma*(S1h[i]+S1h[i-1]);
     Qnew[i] = Qold[i] - theta*(R2h[i]-R2h[i-1]) + gamma*(S2h[i]+S2h[i-1]);
+    Cnew[i] = (Cold[i] - theta*(R2h[i]-R2h[i-1]) + gamma*(S2h[i]+S2h[i-1]))/Anew[i];
   }
 }
 
+void Tube :: step2 (double k)
+{
+  double theta = k/h;  // Theta is determined.
+  double gamma = 0.5*k;  // Gamma is determined.
+
+  for (int i=1; i<N; i++)
+  {
+    Anew[i] = Aold[i] - theta*(R1h[i]-R1h[i-1]) + gamma*(S1h[i]+S1h[i-1]);
+    Qnew[i] = Qold[i] - theta*(R2h[i]-R2h[i-1]) + gamma*(S2h[i]+S2h[i-1]);
+    Cnew[i] = (Cold[i] - theta*(R2h[i]-R2h[i-1]) + gamma*(S2h[i]+S2h[i-1]))/Anew[i];
+  }
+}
 // The left boundary (x=0) uses this function to model an inflow into
 // the system. The actual parameter given to the function is the model time.
 // As stated in the mathematical model the constants of the function are
@@ -626,7 +669,12 @@ double Tube :: Q0_init (double t, double k, double Period)
   else return (0);
 }
 
-
+double Tube :: C0 (double t)
+{
+  if (t <= C_Period) return (0.45*t*Lr3/q,+0.01); else
+  if (t >  C_Period) return (0.1);
+  else return (0);
+}
 // Update of the left boundary at time t. This function uses Q0 to determine
 // the flow rate at the next time-step. From this the value of A is predicted
 // using Lax-Wendroff's numerical scheme. This function is only relevant
@@ -637,9 +685,11 @@ void Tube :: bound_left (double t, double k, double Period)
 
   if (int(t/k) < 0)
     printf("t/k negative in bound_left\n");
-  double Qhm05 = Qnew[0]+Q0_init(t-k,k,Period) - Qh[0];
+  double Qhm05     = Qnew[0]+Q0_init(t-k,k,Period) - Qh[0];
   double R1hm05    = Qhm05;
   Anew[0]   = Aold[0] - k*(R1h[0] - R1hm05)/h;
+  if (Qnew[0]<0) Cnew[0] = Cnew[1];
+  else Cnew[0]   = C0 (t);
 }
 
 // The value at the right boundary at time t is predicted. NB: This should
@@ -752,7 +802,7 @@ void Tube :: bound_right (int qLnb, double k, double theta, double t)
   Anew[N]    = xr;
   pL[qLnb_1] = P(N,Anew[N]);
   Qnew[N]    = k*pL[qLnb_1]*y[0] + pterms;
-
+  Cnew[N]    = Cnew[N-1];     // dC/dx = 0;
   // If the solution is not found print an error message. We don't use
   // subroutine error,
   // since it can't take the function values as arguments.
@@ -1235,7 +1285,9 @@ void Tube :: bound_bif_right (double theta, double gamma)
       fjac[14][10] = - dPdA(N,xb[10])
 	              + sq(xb[1])/cu(xb[10])*(2*k7nh +1);
       fjac[15][10] = - dPdA(N,xb[10])
-	              + sq(xb[1])/cu(xb[10])*(2*k7anh+1);
+	              + sq(xb[1])/cu(xb
+  {
+    [10])*(2*k7anh+1);
     }
     fjac[14][4] = xb[4]/sq(xb[13]);  
     fjac[15][7] = xb[7]/sq(xb[16]);
@@ -1319,6 +1371,8 @@ void Tube :: bound_bif_right (double theta, double gamma)
   RD->Qnew[0] = xb[ 6];
 
   if (j >=ntrial) error ("arteries.C","Root not found in the bifurcation");
+
+
 }
 
 
@@ -1363,10 +1417,24 @@ void solver (Tube *Arteries[], double tstart, double tend, double k, set<int>& I
       }
     }
 
+    for (int i=0; i<nbrves; i++)
+    {
+      Arteries[i] -> Update ();
+    }
+    for (int i=0; i<nbrves; i++)
+    {
+      Arteries[i] -> Get_dC ();
+      for (auto j: ID_Out)
+      {
+        if (i==j) Arteries[j] -> Get_dC (j);
+      }
+      
+    }
+    
     // solve for interior points, by calling step.
     for (int i=0; i<nbrves; i++)
     {
-      Arteries[i] -> step (k);
+      Arteries[i] -> step1 (k);
     }
     
     // Update left and right boundaries, and the bifurcation points.
