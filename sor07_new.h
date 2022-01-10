@@ -68,7 +68,9 @@ double conv   = 1332.20,              // Conversion from mmHg to SI-units.
        Fr2    = sq(q)/g/pow(Lr,5),    // The squared Froudes number.
        Re     = q*rho/mu/Lr,          // Reynolds number.
        Period = Tper*q/Lr3,           // The dimension-less period.
+
        C_Period = 0.2*q/Lr3,
+
        tau    = 0.08*q/Lr3,           // End of pulse, dimension-less.
        k      = Period/tmstps,        // Length of a timestep.
        Deltat = Period/plts,          // Interval between each point plottet.
@@ -79,7 +81,7 @@ double conv   = 1332.20,              // Conversion from mmHg to SI-units.
        invD   = sq(alpha-1)*q/Lr/D_d/2/alpha/(3*alpha-2),
        Cn     = 1.,
 
-       *fjac[18],                     // Work space used by bound_bif.
+       *fjac[18], *dff[9],                     // Work space used by bound_bif.
        xr, f, df;                     // Work space used by bound_right.
 // double K_diss = 0.;
 // double ahpha_a=0.9,                   // the ratio of area at stenosis

@@ -298,7 +298,7 @@ void Tube :: printPxt (FILE *fd, double t, int offset)
 void Tube :: printQxt (FILE *fd, double t, int offset)
 {
   if (offset == 0) fprintf (fd, "\n");
-  for (int i=0; i<N; i++)
+  for (int i=0; i<=N; i++)
   {
     fprintf (fd, "%13.10f %13.10f %15.10f\n",
              t*Lr3/q, (i+offset)*h*Lr, Qnew[i]*q);
@@ -311,6 +311,15 @@ void Tube :: printAxt (FILE *fd, double t, int offset)
   {
     fprintf (fd, "%13.10f %13.10f %15.10f\n",
              t*Lr3/q, (i+offset)*h*Lr, Anew[i]*Lr2);
+  }
+}
+
+void Tube :: printDxt (FILE *fd, double t, int offset)
+{
+  for (int i=0; i<=N; i++)
+  {
+    fprintf (fd, "%13.10f %13.10f %15.10f\n",
+             t*Lr3/q, (i+offset)*h*Lr, Cnew[i]*Cn);
   }
 }
 

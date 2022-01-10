@@ -29,13 +29,16 @@ int main(int argc, char *argv[])
   // pressure and flow file point name:
   vector<string> nameP(nbrves, "./result/p");
   vector<string> nameQ(nbrves, "./result/q");
+  vector<string> nameD(nbrves, "./result/D");
   FILE *fp[nbrves];
   FILE *fq[nbrves];
+  FILE *fD[nbrves];
   for(int i=0;i<nbrves;i++)
   {
     auto j=i+1;
     nameP[i] += to_string(j);
     nameQ[i] += to_string(j);
+    nameD[i] += to_string(j);
   }
   const char *nameA1 = "./result/A1";
   const char *nameC1 = "./result/C1";
@@ -53,6 +56,10 @@ int main(int argc, char *argv[])
     string SuccessInfo2 = "File "+to_string(j)+"q OK \n";
     string FailInfo2 = "File "+to_string(j)+"q NOT OK \n";
     if (fq[i]) fprintf(stdout, "%s", (SuccessInfo2).c_str()); else error("main.C", (FailInfo2).c_str());
+    fD[i] = fopen((nameD[i]).c_str(), "w");
+    string SuccessInfo3 = "File "+to_string(j)+"D OK \n";
+    string FailInfo3 = "File "+to_string(j)+"D NOT OK \n";
+    if (fD[i]) fprintf(stdout, "%s", (SuccessInfo3).c_str()); else error("main.C", (FailInfo3).c_str());
   }
   FILE *fA1 = fopen(nameA1, "w");
   if (fA1) fprintf(stdout, "File 1A OK \n"); else error("main.C", "File 1A NOT OK");
@@ -61,11 +68,11 @@ int main(int argc, char *argv[])
 
   // Workspace used by bound_bif
   for(int i=0; i<18; i++) fjac[i] = new double[18];
-
+  for(int i=0; i<9; i++) dff[i] = new double[9];
   clock_t c1 = clock();        // Only used when timing the program.
   tstart     = 0.0;            // Starting time.
   finaltime  = 8*Period;       // Final end-time during a simulation.
-  tend       = 7*Period;       // Timestep before the first plot-point
+  tend       = 0*Period;       // Timestep before the first plot-point
                                // is reached.
 
   // The number of vessels in the network is given when the governing array of
@@ -234,6 +241,7 @@ int main(int argc, char *argv[])
     {
       Arteries[i]->printPxt(fp[i], tend, 0);
       Arteries[i]->printQxt(fq[i], tend, 0);
+      Arteries[i]->printDxt(fD[i], tend, 0);
     }
     Arteries[0]->printAxt(fA1, tend, 0);
     Arteries[0]->printCxt(fC1, tend, 0);
@@ -259,7 +267,7 @@ int main(int argc, char *argv[])
 
   // Matrices and arrays are deleted
   for (int i=0; i<18; i++) delete[] fjac[i];
-
+  for (int i=0; i<9; i++) delete[] dff[i];
 
 
   // close the files:
@@ -272,6 +280,9 @@ int main(int argc, char *argv[])
     string SuccessInfo2 = "Close "+to_string(j)+"q OK \n";
     string FailInfo2 = "Close "+to_string(j)+"q NOT OK \n";
     if (fclose(fq[i]) != EOF) fprintf(stdout, "%s", (SuccessInfo2).c_str()); else error("main.C", (FailInfo2).c_str());
+    string SuccessInfo3 = "Close "+to_string(j)+"D OK \n";
+    string FailInfo3 = "Close "+to_string(j)+"D NOT OK \n";
+    if (fclose(fD[i]) != EOF) fprintf(stdout, "%s", (SuccessInfo3).c_str()); else error("main.C", (FailInfo3).c_str());
   }
   if (fclose(fA1) != EOF) fprintf(stdout, "Close 1A OK\n"); else error("main.C", "Close 1A NOT OK");
   if (fclose(fC1) != EOF) fprintf(stdout, "Close 1C OK\n"); else error("main.C", "Close 1C NOT OK");

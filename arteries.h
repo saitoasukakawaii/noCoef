@@ -23,7 +23,7 @@
 extern double   conv, rho, mu, mu_pl, nu, Lr, Lr2, Lr3, g, q, Fr2,
                 Re, p0, pmean, tmst, Period, Fcst, alpha, CO, COm,
                 Deltat, tau, m1, m2, m3, m4, Cn, invD, C_Period,
-	              *fjac[18], xr, f, df;
+	              *fjac[18], *dff[9], xr, f, df;
 
 // The class structure.
 class Tube {
@@ -92,6 +92,7 @@ public:
   void printQxt (FILE *fd, double t, int offset);
   void printCxt (FILE *fd, double t, int offset);
   void printUxt (FILE *fd, double t, int offset);
+  void printDxt (FILE *fd, double t, int offset);
 
   // Prints P as a function of Q and A, respectively,  at a given location x.
   void printPQ (FILE *fd, int i);
@@ -147,14 +148,12 @@ public:
 
   // Finds the flux acc. to sys. eq.
   double Rvec (int k, int i, int j, double Q, double A);
-  double Rvec (int k, int i, int j, double Q, double A, double C);
   // Finds the rhs. of system eq.
   double Svec (int k, int i, int j, double Q, double A);
-  double Svec (int k, int i, int j, double Q, double A, double C);
 
   // Steps through interior points.
-  void step (double k);
-
+  void step1 (double k);
+  void step2 (double k);
 
   // Updates left bndry. This should only be done for the inlet tube.
   void bound_left (double t, double k, double Period);
@@ -163,7 +162,10 @@ public:
   // Updates right bndry. This should only be done for terminal vessels.
   double c  (int i, double A); // The wave speed through aorta.
   double Hp (int i, double Q, double A);
+  double Hn (int i, double Q, double A);
   void poschar (double theta, double &qR, double &aR, double &cR, double &HpR);
+  void negchar (double theta, double &qS, double &aS, double &cS, double &HnS);
+  
   void bound_right (int qLnb, double k, double theta, double t);
 
 
@@ -204,6 +206,7 @@ inline void Update(){
     Cold[i] = Cnew[i];
   }
 }
+
 inline void Get_dC(){
   dCold[0] = (Cold[1]-Cold[0])/h;
   for (int i=1; i<N; i++)  // Remember the values at this time level.
@@ -213,11 +216,21 @@ inline void Get_dC(){
   dCold[N] = (Cold[N]-Cold[N-1])/h;
 }
 
-private:
+inline void Get_dCh(){
+  dCh[0] = (0.5*(Ch[2]+Ch[1])-Ch[0])/h;
+  for (int i=1; i<N-1; i++)  // Remember the values at this time level.
+  {
+    dCh[i] = (Ch[i+2]-Ch[i])/h/2;
+  }
+  dCh[N-1] = (Ch[N+1]-0.5*(Ch[N]+Ch[N-1]))/h;
+}
+
+double C0(double t);
+
   // The private function Q0 may only be accessed from the left boundary
   // function. It ensures a certain and given CO (defined in main.h).
   double Q0_init (double t, double k, double Period);
-  double C0(double t);
+  
 };
 
 void solver (Tube *Arteries[], double tstart, double tend, double k, set<int>& ID_Out, set<int>& ID_Bif);
