@@ -204,6 +204,15 @@ inline void Update(){
     Cold[i] = Cnew[i];
   }
 }
+inline void Get_dC(){
+  dCold[0] = (Cold[1]-Cold[0])/h;
+  for (int i=1; i<N; i++)  // Remember the values at this time level.
+  {
+    dCold[i] = (Cold[i+1]-Cold[i-1])/h/2;
+  }
+  dCold[N] = (Cold[N]-Cold[N-1])/h;
+}
+
 private:
   // The private function Q0 may only be accessed from the left boundary
   // function. It ensures a certain and given CO (defined in main.h).

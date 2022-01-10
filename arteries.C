@@ -125,7 +125,7 @@ Tube :: Tube (double Length,
   dp1dr0h = new double[N+2];
   Ah	    = new double[N];
   Qh	    = new double[N];
-  Ch	    = new double[N];
+  Ch	    = new double[N+2];
   dCh	    = new double[N];
   R1h	    = new double[N];
   R2h	    = new double[N];
@@ -160,7 +160,6 @@ Tube :: Tube (double Length,
     Anew[i]    = A0[i];
     Cnew[i]    = 0.1;
     dCold[i]   = 0;
-    dCnew[i]   = 0;
   }
   r0h[N+1]     = rtop*exp((N+0.5)*log(rbot/rtop)/N)/Lr;
   dr0dxh[N+1]  = log(rbot/rtop)/h/N*r0h[N+1];
@@ -569,17 +568,6 @@ double Tube :: Rvec (int k, int i, int j, double Q, double A)
   return(0);
 }
 
-double Tube :: Rvec (int k, int i, int j, double Q, double A, double C)
-{
-  
-  if(k==3) {
-    if (j==0) return Q*C-invD*sq(Q)*dC(sq(Q)/A + ((j==0)?B(i,A):Bh(i,A)));
-    else return(sq(Q)/A + ((j==0)?B(i,A):Bh(i,A)));
-  }
-  else error ("arteries.cxx","Call of non-existing vector-component of R for C");
-  return(0);
-}
-
 // Similarly the right hand side of the system of equations must be determined
 // at i + j/2. Also in this case the function is given as stated in
 // the mathematical model, and also in this case k states the needed component
@@ -592,12 +580,7 @@ double Tube :: Svec (int k, int i, int j, double Q, double A)
   return(0);
 }
 
-double Tube :: Svec (int k, int i, int j, double Q, double A, double C)
-{
-  if(k==3) return 0;
-  else error ("arteries.cxx","Call of non-existing vector-component of S for C");
-  return(0);
-}
+
 // The solutions of Anew and Qnew are found for all interior points
 // of the vessel at (t+k), where k is the length of the current
 // time-step. This function saves the results in the arrays Anew and
@@ -615,10 +598,10 @@ void Tube :: step1 (double k)
   {
     R1[i] = Rvec(1,i,0,Qold[i],Aold[i]);
     R2[i] = Rvec(2,i,0,Qold[i],Aold[i]);
-    R3[i] = Rvec(3,i,0,Qold[i],Aold[i],Cold[i]);
     S1[i] = Svec(1,i,0,Qold[i],Aold[i]);
     S2[i] = Svec(2,i,0,Qold[i],Aold[i]);
-    S3[i] = Svec(3,i,0,Qold[i],Aold[i],Cold[i]);
+    R3[i] = Qold[i]*Cold[i] - sq(Qold[i])*dCold[i]*invD;
+    S3[i] = 0;
   }
 
   for (int i=0; i<N; i++)
@@ -627,20 +610,12 @@ void Tube :: step1 (double k)
 	     0.5*gamma*(S1[i+1]+S1[i]);
     Qh[i]  = 0.5*(Qold[i+1]+Qold[i]) - 0.5*theta*(R2[i+1]-R2[i]) +
 	     0.5*gamma*(S2[i+1]+S2[i]);
-    Ch[i]  = (0.5*(Aold[i+1]*Cold[i+1]+Aold[i]*Cold[i]) - 0.5*theta*(R3[i+1]-R3[i]) +
-	     0.5*gamma*(S3[i+1]+S3[i]))/Ah[i];
+    Ch[i+1]  = ( 0.5*(Aold[i+1]*Cold[i+1]+Aold[i]*Cold[i]) - 0.5*theta*(R3[i+1]-R3[i]) +
+	     0.5*gamma*(S3[i+1]+S3[i]) )/Ah[i];
     R1h[i] = Rvec(1,i,1,Qh[i],Ah[i]);
     R2h[i] = Rvec(2,i,1,Qh[i],Ah[i]);
-    R3h[i] = Rvec(3,i,1,Qh[i],Ah[i],Ch[i]);
     S1h[i] = Svec(1,i,1,Qh[i],Ah[i]);
     S2h[i] = Svec(2,i,1,Qh[i],Ah[i]);
-    S3h[i] = Svec(3,i,1,Qh[i],Ah[i],Ch[i]);
-  }
-  for (int i=1; i<N; i++)
-  {
-    Anew[i] = Aold[i] - theta*(R1h[i]-R1h[i-1]) + gamma*(S1h[i]+S1h[i-1]);
-    Qnew[i] = Qold[i] - theta*(R2h[i]-R2h[i-1]) + gamma*(S2h[i]+S2h[i-1]);
-    Cnew[i] = (Cold[i] - theta*(R2h[i]-R2h[i-1]) + gamma*(S2h[i]+S2h[i-1]))/Anew[i];
   }
 }
 
@@ -649,11 +624,17 @@ void Tube :: step2 (double k)
   double theta = k/h;  // Theta is determined.
   double gamma = 0.5*k;  // Gamma is determined.
 
+  for (int i=0; i<N; i++)
+  {
+    R3h[i] = Qh[i]*Ch[i+1]-sq(Qh[i])*dCh[i]*invD;
+    S3h[i] = 0;
+  }
+
   for (int i=1; i<N; i++)
   {
     Anew[i] = Aold[i] - theta*(R1h[i]-R1h[i-1]) + gamma*(S1h[i]+S1h[i-1]);
     Qnew[i] = Qold[i] - theta*(R2h[i]-R2h[i-1]) + gamma*(S2h[i]+S2h[i-1]);
-    Cnew[i] = (Cold[i] - theta*(R2h[i]-R2h[i-1]) + gamma*(S2h[i]+S2h[i-1]))/Anew[i];
+    Cnew[i] = ( Aold[i]*Cold[i] - theta*(R3h[i]-R3h[i-1]) + gamma*(S3h[i]+S3h[i-1]) )/Anew[i];
   }
 }
 // The left boundary (x=0) uses this function to model an inflow into
@@ -671,8 +652,8 @@ double Tube :: Q0_init (double t, double k, double Period)
 
 double Tube :: C0 (double t)
 {
-  if (t <= C_Period) return (0.45*t*Lr3/q,+0.01); else
-  if (t >  C_Period) return (0.1);
+  if (t <= C_Period) return (0.45*t*Lr3/q,+0.01)/Cn; else
+  if (t >  C_Period) return (0.1/Cn);
   else return (0);
 }
 // Update of the left boundary at time t. This function uses Q0 to determine
@@ -688,8 +669,8 @@ void Tube :: bound_left (double t, double k, double Period)
   double Qhm05     = Qnew[0]+Q0_init(t-k,k,Period) - Qh[0];
   double R1hm05    = Qhm05;
   Anew[0]   = Aold[0] - k*(R1h[0] - R1hm05)/h;
-  if (Qnew[0]<0) Cnew[0] = Cnew[1];
-  else Cnew[0]   = C0 (t);
+  if (Qnew[0]<0) {Cnew[0] = Cnew[1];Ch[0] = Ch[1];}
+  else {Cnew[0] = C0 (t);Ch[0] = C0(t+k/2);}
 }
 
 // The value at the right boundary at time t is predicted. NB: This should
@@ -713,6 +694,11 @@ double Tube :: Hp (int i, double Q, double A)
   return (F(Q,A) - A*dPdx1(i,A)/Fr2)/(-Q/A + c(i,A));
 }
 
+double Tube :: Hn (int i, double Q, double A)
+{
+    return (F(Q,A) - A*dPdx1(i,A)/Fr2)/(-Q/A - c(i,A));
+}
+
 void Tube :: poschar (double theta, double &qR, double &aR, double &cR, double &HpR)
 {
   double ctm1  = c  (N, Aold[N]);
@@ -729,6 +715,25 @@ void Tube :: poschar (double theta, double &qR, double &aR, double &cR, double &
   aR  = Aold[N] - (Aold[N] - Aold[N-1])*ch;
   cR  = ctm1    - (ctm1  - c (N-1,Aold[N-1]))*ch;
   HpR = Hptm1   - (Hptm1 - Hp(N-1,Qold[N-1],Aold[N-1]))*ch;
+}
+
+void Tube :: negchar (double theta, double &qS, double &aS, double &cS, double &HnS)
+{
+    double ctm1  = c(0, Aold[0]);
+    double Hntm1 = Hn(0, Qold[0], Aold[0]);
+    double uS    = Qold[0]/Aold[0];
+    double ch    = (uS - ctm1) * theta;
+    
+    if ( ctm1 - uS < 0)
+    {
+        printf("ctm1 - uS < 0, CFL condition violated\n");
+        exit(1);
+    }
+    
+    qS  = Qold[0] + (Qold[0] - Qold[1])*ch;
+    aS  = Aold[0] + (Aold[0] - Aold[1])*ch;
+    cS  = ctm1    + (ctm1  - c (1,Aold[1]))*ch;
+    HnS = Hntm1   + (Hntm1 - Hn(1,Qold[1],Aold[1]))*ch;
 }
 
 // using method of characteristics at right boundary 
@@ -803,6 +808,7 @@ void Tube :: bound_right (int qLnb, double k, double theta, double t)
   pL[qLnb_1] = P(N,Anew[N]);
   Qnew[N]    = k*pL[qLnb_1]*y[0] + pterms;
   Cnew[N]    = Cnew[N-1];     // dC/dx = 0;
+  Ch[N+1]    = Ch[N];
   // If the solution is not found print an error message. We don't use
   // subroutine error,
   // since it can't take the function values as arguments.
@@ -1370,8 +1376,83 @@ void Tube :: bound_bif_right (double theta, double gamma)
   RD->Anew[0] = xb[15];
   RD->Qnew[0] = xb[ 6];
 
-  if (j >=ntrial) error ("arteries.C","Root not found in the bifurcation");
+  double xx[9], ff[9];
+  xx[ 0] =  Ch[N];                      //Initial guess for Q1_xb n+1
+  xx[ 1] = (Cold[N-1] + Cold[N])/2;       //Initial guess for Q1_xb^n+0.5
+  xx[ 2] =  Cold[N];                      //Initial guess for Q1_xb+0.5 n+0.5
+  xx[ 3] =  LD->Ch[1];                    //Initial guess for Q2_xb n+1
+  xx[ 4] = (LD->Cold[0] + LD->Cold[1])/2; //Initial guess for Q2_xb n+0.5
+  xx[ 5] =  LD->Cold[0];                  //Initial guess for Q2_xb+0.5 n+0.5
+  xx[ 6] =  RD->Ch[1];                    //Initial guess for Q3_xb n+1
+  xx[ 7] = (RD->Cold[0] + RD->Cold[1])/2; //Initial guess for Q3_xb n+0.5
+  xx[ 8] =  RD->Cold[0];                  //Initial guess for Q3_xb+0.5 n+0.5
+  double kk1 = -Aold[N]*Cold[N]-theta*Qh[N-1]*Ch[N];
+  double kk2 = -LD->Aold[0]*LD->Cold[N]
+               +LD->Qh[0]*LD->Ch[1]*theta;
+  double kk3 = -RD->Aold[0]*RD->Cold[0]
+               +RD->Qh[0]*RD->Ch[1]*theta;
+  // The residuals (fvec), and the Jacobian is determined, and if possible
+  // the system of equations is solved.
+  j=0;
+  while (j <= ntrial && ok==false) // Find the zero
+  {
+    // The residuals.
+    ff[0]  = xx[0]*xb[0]-xx[3]*xb[3]-xx[6]*xb[6];
+    ff[1]  = xx[1]*xb[1]-xx[4]*xb[4]-xx[7]*xb[7];
+    ff[2]  = xx[2]*xb[2]-xx[5]*xb[5]-xx[8]*xb[8];
 
+    ff[3]  = xx[1]*2-xx[2]-Ch[N];
+    ff[4]  = xx[4]*2-xx[5]-LD->Ch[1];
+    ff[5]  = xx[7]*2-xx[8]-RD->Ch[1];
+
+    ff[6]  = xx[0]*xb[ 9]+theta*xb[2]*xx[2] + kk1;
+    ff[7]  = xx[3]*xb[12]-theta*xb[5]*xx[5] + kk2;
+    ff[8]  = xx[6]*xb[15]-theta*xb[8]*xx[8] + kk3;
+    for (int row = 0; row < 9; row++)
+      for (int col = 0; col < 9; col++)
+        dff[row][col] = 0.0;
+    // The Jacobian.
+    // flow equation
+    dff[0][0] = xb[0];
+    dff[0][3] =-xb[3];
+    dff[0][6] =-xb[6];
+    dff[1][1] = xb[1];
+    dff[1][4] =-xb[4];
+    dff[1][7] =-xb[7];
+    dff[2][2] = xb[2];
+    dff[2][5] =-xb[5];
+    dff[2][8] =-xb[8];
+    // area equation
+    dff[3][1] = 2.0;
+    dff[3][2] =-1.0;
+    dff[4][4] = 2.0;
+    dff[4][5] =-1.0;
+    dff[5][7] = 2.0;
+    dff[5][8] =-1.0;
+    // ghost point
+    dff[6][ 1] = -1.0;
+    dff[6][ 2] =  0.5;
+    dff[ 7][ 4] = -1.0;
+    dff[ 7][ 5] =  0.5;
+    dff[ 8][ 7] = -1.0;
+    dff[ 8][ 8] =  0.5;
+    
+
+    // Check whether solution is close enough. If not run the loop again.
+    // int ch = zero (xb, 18, 1.0e-4, 1.0e-4, fvec, fjac);
+    int ch = zero (xx, 9, 1.0e-12, 1.0e-12, ff, dff);
+    if (ch == 1) ok = true;
+
+    j = j+1;
+  }
+  if (j >=ntrial) error ("arteries.C","Transport Root not found in the bifurcation");
+
+  Cnew[N]     = xx[0];
+  Ch[N+1]     = xx[1];
+  LD->Cnew[0] = xx[3];
+  LD->Ch[0]   = xx[4];
+  RD->Cnew[0] = xx[6];
+  RD->Ch[0]   = xx[7];
 
 }
 
@@ -1421,14 +1502,10 @@ void solver (Tube *Arteries[], double tstart, double tend, double k, set<int>& I
     {
       Arteries[i] -> Update ();
     }
+    // impose boundary condition
     for (int i=0; i<nbrves; i++)
     {
       Arteries[i] -> Get_dC ();
-      for (auto j: ID_Out)
-      {
-        if (i==j) Arteries[j] -> Get_dC (j);
-      }
-      
     }
     
     // solve for interior points, by calling step.
@@ -1436,7 +1513,7 @@ void solver (Tube *Arteries[], double tstart, double tend, double k, set<int>& I
     {
       Arteries[i] -> step1 (k);
     }
-    
+
     // Update left and right boundaries, and the bifurcation points.
     Arteries[0] -> bound_left(t+k, k, Period);
     for (auto i: ID_Out)
@@ -1449,27 +1526,16 @@ void solver (Tube *Arteries[], double tstart, double tend, double k, set<int>& I
       double gamma = k/2;
       Arteries[i] -> bound_bif_right (theta, gamma);
     }
-    // for (int i=0; i<nbrves; i++)
-    // {
-    //   if (Arteries[i] -> LD == 0)
-    //   {
-    //     Arteries[i] -> bound_right (qLnb, k, k/Arteries[i]->h, t);
-    //   }
-    //   else if ((i==15) || (i==17)) { continue; }
-    //   else
-    //   {
-    //     double theta = k/Arteries[i]->h;
-    //       double gamma = k/2;
-    //     Arteries[i] -> bound_bif_right (theta, gamma);
-    //   }
-    //   if (i == 18)
-    //   {
-    //   	double theta = k/Arteries[i]->h;
-    //       double gamma = k/2;
-    //     Arteries[i] -> bound_bif_left (theta, gamma);
-    //   }
-    // }
-    // Update the time and position within one period.
+    // calculate the dCh
+    for (int i=0; i<nbrves; i++)
+    {
+      Arteries[i] -> Get_dCh ();
+    }
+    for (int i=0; i<nbrves; i++)
+    {
+      Arteries[i] -> step2 (k);
+    }
+    
     t = t + k;
     qLnb = (qLnb + 1) % tmstps;
   }
