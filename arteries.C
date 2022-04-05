@@ -553,9 +553,7 @@ double Tube :: Rvec (int k, int i, int j, double Q, double A)
   if(k==1) return(Q); else
   if(k==2) return(sq(Q)/A + ((j==0)?B(i,A):Bh(i,A)));
   else error ("arteries.cxx","Call of non-existing vector-component of R");
-  return(0);double ind_b_diss = -1.2;
-double Area_top_diss = 1.51285/Lr2;
-double Area_bot_diss = 1.51285/Lr2;
+  return(0);
 }
 
 // Similarly the right hand side of the system of equations must be determined
