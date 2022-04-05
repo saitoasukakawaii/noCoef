@@ -29,13 +29,16 @@ int main(int argc, char *argv[])
   // pressure and flow file point name:
   vector<string> nameP(nbrves, "./result/p");
   vector<string> nameQ(nbrves, "./result/q");
+  vector<string> nameG(nbrves, "./result/G");
   FILE *fp[nbrves];
   FILE *fq[nbrves];
+  FILE *fG[nbrves];
   for(int i=0;i<nbrves;i++)
   {
     auto j=i+1;
     nameP[i] += to_string(j);
     nameQ[i] += to_string(j);
+    nameG[i] += to_string(j);
   }
   const char *nameA1 = "./result/A1";
   const char *nameC1 = "./result/C1";
@@ -53,6 +56,10 @@ int main(int argc, char *argv[])
     string SuccessInfo2 = "File "+to_string(j)+"q OK \n";
     string FailInfo2 = "File "+to_string(j)+"q NOT OK \n";
     if (fq[i]) fprintf(stdout, "%s", (SuccessInfo2).c_str()); else error("main.C", (FailInfo2).c_str());
+        fq[i] = fopen((nameQ[i]).c_str(), "w");
+    string SuccessInfo3 = "File "+to_string(j)+"G OK \n";
+    string FailInfo3 = "File "+to_string(j)+"G NOT OK \n";
+    if (fG[i]) fprintf(stdout, "%s", (SuccessInfo3).c_str()); else error("main.C", (FailInfo3).c_str());
   }
   FILE *fA1 = fopen(nameA1, "w");
   if (fA1) fprintf(stdout, "File 1A OK \n"); else error("main.C", "File 1A NOT OK");
@@ -211,16 +218,6 @@ int main(int argc, char *argv[])
   // time in the above declaration.
   while (tend <= finaltime)
   {
-    for (int j=0; j<nbrves; j++)
-    {
-      int ArtjN = Arteries[j]->N;     // The number of grid points along the vessel
-      for (int i=0; i<ArtjN; i++)
-      {
-        Arteries[j]->Qprv[i+1] = Arteries[j]->Qnew[i+1];
-        Arteries[j]->Aprv[i+1] = Arteries[j]->Anew[i+1];
-      }
-    }
-
 
     // Solves the equations until time equals tend.
     solver (Arteries, tstart, tend, k);
@@ -234,6 +231,7 @@ int main(int argc, char *argv[])
     {
       Arteries[i]->printPxt(fp[i], tend, 0);
       Arteries[i]->printQxt(fq[i], tend, 0);
+      Arteries[i]->printGxt(fG[i], tend, 0);
     }
     Arteries[0]->printAxt(fA1, tend, 0);
     Arteries[0]->printCxt(fC1, tend, 0);

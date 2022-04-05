@@ -97,12 +97,16 @@ Tube :: Tube (double Length,
   Anew	  = new double[N+1];
   Qold	  = new double[N+1];
   Aold	  = new double[N+1];
-  Qprv	  = new double[N+1];
-  Aprv	  = new double[N+1];
+  Gnew	  = new double[N+1];
+  Gold	  = new double[N+1];
+  // Qprv	  = new double[N+1];
+  // Aprv	  = new double[N+1];
   R1	  = new double[N+1];
   R2	  = new double[N+1];
   S1	  = new double[N+1];
   S2	  = new double[N+1];
+  R3	  = new double[N+1];
+  S3	  = new double[N+1];
   r0	  = new double[N+1];
   r0h	  = new double[N+2];
   dr0dx   = new double[N+1];
@@ -119,10 +123,13 @@ Tube :: Tube (double Length,
   dp1dr0h = new double[N+2];
   Ah	  = new double[N];
   Qh	  = new double[N];
+  Gh    = new double[N];
   R1h	  = new double[N];
   R2h	  = new double[N];
   S1h	  = new double[N];
   S2h	  = new double[N];
+  R3h	  = new double[N];
+  S3h	  = new double[N];
   pL	  = new double[tmstps];
   y	  = new double[tmstps];
 
@@ -148,6 +155,7 @@ Tube :: Tube (double Length,
     dp1dr0h[i] = dfrdr0h[i]/M_PI;
     Qnew[i]    = 1.0;
     Anew[i]    = A0[i];
+    Gnew[i]    = 0.01;
   }
   r0h[N+1]     = rtop*exp((N+0.5)*log(rbot/rtop)/N)/Lr;
   dr0dxh[N+1]  = log(rbot/rtop)/h/N*r0h[N+1];
@@ -202,8 +210,10 @@ Tube :: ~Tube ()
   delete[] Qnew;
   delete[] Aold;
   delete[] Qold;
-  delete[] Aprv;
-  delete[] Qprv;
+  delete[] Gnew;
+  delete[] Gold;
+  // delete[] Aprv;
+  // delete[] Qprv;
   delete[] Ah;
   delete[] Qh;
   delete[] y;
@@ -230,6 +240,11 @@ Tube :: ~Tube ()
   delete[] p1h;
   delete[] dp1dr0;
   delete[] dp1dr0h;
+  delete[] S3;
+  delete[] S3h;
+  delete[] R3;
+  delete[] R3h;
+
 }
 
 // ----------------------PLOTTING ROUTINES WITH DIMENSIONS ------------
@@ -326,6 +341,15 @@ void Tube :: printUxt (FILE *fd, double t, int offset)
   {
     fprintf (fd, "%13.10f %13.10f %15.10f\n",
              t*Lr3/q, (i+offset)*h*Lr, Qnew[i]/Anew[i]*q/Lr2);
+  }
+}
+
+void Tube :: printGxt (FILE *fd, double t, int offset)
+{
+  for (int i=0; i<N; i++)
+  {
+    fprintf (fd, "%13.10f %13.10f %15.10f\n",
+             t*Lr3/q, (i+offset)*h*Lr, Gnew[i]);
   }
 }
 
@@ -553,9 +577,7 @@ double Tube :: Rvec (int k, int i, int j, double Q, double A)
   if(k==1) return(Q); else
   if(k==2) return(sq(Q)/A + ((j==0)?B(i,A):Bh(i,A)));
   else error ("arteries.cxx","Call of non-existing vector-component of R");
-  return(0);double ind_b_diss = -1.2;
-double Area_top_diss = 1.51285/Lr2;
-double Area_bot_diss = 1.51285/Lr2;
+  return(0);
 }
 
 // Similarly the right hand side of the system of equations must be determined

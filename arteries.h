@@ -49,9 +49,11 @@ public:
 
   double *Qnew, *Qold, *Qh,    // The arrays needed to store data during
          *Anew, *Aold, *Ah,    // the numerical solution of the system.
+         *Gnew, *Gold, *Gh,    // transport
          *R1, *R2, *R1h, *R2h,
          *S1, *S2, *S1h, *S2h,
-         *Qprv, *Aprv,
+         *R3, *R3h, *S3, *S3h,
+         // *Qprv, *Aprv,       // useless
          *pL, *y, *QL, *Q0, *Z,
 	 *r0, *r0h,
 	 *dr0dx, *dr0dxh,
@@ -89,7 +91,7 @@ public:
   void printQxt (FILE *fd, double t, int offset);
   void printCxt (FILE *fd, double t, int offset);
   void printUxt (FILE *fd, double t, int offset);
-
+  void printGxt (FILE *fd, double t, int offset);
   // Prints P as a function of Q and A, respectively,  at a given location x.
   void printPQ (FILE *fd, int i);
   void printPA (FILE *fd, int i);
