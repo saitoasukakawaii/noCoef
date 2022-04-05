@@ -21,7 +21,7 @@ FC = gfortran
 # loader
 LD = g++
 
-CXXFLAGS=-O3 -g -Wall -std=c++11 -D_REENTRANT
+CXXFLAGS=-O3 -g -Wall -fopenmp -std=c++11 -D_REENTRANT
 
 FFLAGS=-O2 -g -Wall -I/usr/include
 FLIBS=-lgfortran -lfftw3

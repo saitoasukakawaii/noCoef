@@ -155,7 +155,7 @@ Tube :: Tube (double Length,
     dp1dr0h[i] = dfrdr0h[i]/M_PI;
     Qnew[i]    = 1.0;
     Anew[i]    = A0[i];
-    Gnew[i]    = 0.01;
+    Gnew[i]    = 0.01*Anew[i];
   }
   r0h[N+1]     = rtop*exp((N+0.5)*log(rbot/rtop)/N)/Lr;
   dr0dxh[N+1]  = log(rbot/rtop)/h/N*r0h[N+1];
@@ -349,7 +349,7 @@ void Tube :: printGxt (FILE *fd, double t, int offset)
   for (int i=0; i<N; i++)
   {
     fprintf (fd, "%13.10f %13.10f %15.10f\n",
-             t*Lr3/q, (i+offset)*h*Lr, Gnew[i]);
+             t*Lr3/q, (i+offset)*h*Lr, Gnew[i]/Anew[i]);
   }
 }
 
@@ -580,6 +580,11 @@ double Tube :: Rvec (int k, int i, int j, double Q, double A)
   return(0);
 }
 
+double Tube :: Rvec (int i, double Q, double A, double G)
+{
+  return (G*Q/A);
+}
+
 // Similarly the right hand side of the system of equations must be determined
 // at i + j/2. Also in this case the function is given as stated in
 // the mathematical model, and also in this case k states the needed component
@@ -587,7 +592,8 @@ double Tube :: Rvec (int k, int i, int j, double Q, double A)
 double Tube :: Svec (int k, int i, int j, double Q, double A)
 {
   if(k==1) return(0.0); else
-  if(k==2) return(F(Q,A) + ((j==0)?dBdx1(i,A):dBdx1h(i,A)));
+  if(k==2) return(F(Q,A) + ((j==0)?dBdx1(i,A):dBdx1h(i,A))); else
+  if(k==3) return(0.0);
   else error ("arteries.cxx","Call of non-existing vector-component of S");
   return(0);
 }
@@ -602,6 +608,7 @@ void Tube :: step (double k)
   double theta = k/h;  // Theta is determined.
   double gamma = 0.5*k;  // Gamma is determined.
 
+  #pragma omp simd
   for (int i=0; i<=N; i++)  // Remember the values at this time level.
   {
     Qold[i] = Qnew[i];
@@ -613,25 +620,36 @@ void Tube :: step (double k)
   {
     R1[i] = Rvec(1,i,0,Qold[i],Aold[i]);
     R2[i] = Rvec(2,i,0,Qold[i],Aold[i]);
+    R3[i] = Rvec(i,Qold[i],Aold[i],Gold[i]);
     S1[i] = Svec(1,i,0,Qold[i],Aold[i]);
     S2[i] = Svec(2,i,0,Qold[i],Aold[i]);
+    S3[i] = Svec(3,i,0,Qold[i],Aold[i]);
   }
-
+  #pragma omp simd
   for (int i=0; i<N; i++)
   {
     Ah[i]  = 0.5*(Aold[i+1]+Aold[i]) - 0.5*theta*(R1[i+1]-R1[i]) +
 	     0.5*gamma*(S1[i+1]+S1[i]);
     Qh[i]  = 0.5*(Qold[i+1]+Qold[i]) - 0.5*theta*(R2[i+1]-R2[i]) +
 	     0.5*gamma*(S2[i+1]+S2[i]);
+    Gh[i]  = 0.5*(Gold[i+1]+Gold[i]) - 0.5*theta*(R3[i+1]-R3[i]) +
+	     0.5*gamma*(S3[i+1]+S3[i]);
+  }
+
+  for (int i=0; i<N; i++){
     R1h[i] = Rvec(1,i,1,Qh[i],Ah[i]);
     R2h[i] = Rvec(2,i,1,Qh[i],Ah[i]);
+    R3h[i] = Rvec(i,Qh[i],Ah[i],Gh[i]);
     S1h[i] = Svec(1,i,1,Qh[i],Ah[i]);
     S2h[i] = Svec(2,i,1,Qh[i],Ah[i]);
+    S3h[i] = Svec(3,i,1,Qh[i],Ah[i]);
   }
+  #pragma omp simd
   for (int i=1; i<N; i++)
   {
     Anew[i] = Aold[i] - theta*(R1h[i]-R1h[i-1]) + gamma*(S1h[i]+S1h[i-1]);
     Qnew[i] = Qold[i] - theta*(R2h[i]-R2h[i-1]) + gamma*(S2h[i]+S2h[i-1]);
+    Gnew[i] = Gold[i] - theta*(R3h[i]-R3h[i-1]) + gamma*(S3h[i]+S3h[i-1]);
   }
 }
 
@@ -645,6 +663,13 @@ double Tube :: Q0_init (double t, double k, double Period)
 {
   if (t <= Period) return (Q0[int(t/k)]); else
   if (t >  Period) return (Q0_init((t-Period),k,Period));
+  else return (0);
+}
+
+double Tube :: G0_init (double t, double Period)
+{
+  if (t <= 0.2*Period) return (0.45*t*Lr3/q+0.01); else
+  if (t >  0.2*Period) return 0.1;
   else return (0);
 }
 
@@ -662,6 +687,7 @@ void Tube :: bound_left (double t, double k, double Period)
   double Qhm05 = Qnew[0]+Q0_init(t-k,k,Period) - Qh[0];
   double R1hm05    = Qhm05;
   Anew[0]   = Aold[0] - k*(R1h[0] - R1hm05)/h;
+  Gnew[0]   = G0_init(t,Period)*Anew[0];
 }
 
 // The value at the right boundary at time t is predicted. NB: This should
@@ -787,6 +813,7 @@ void Tube :: bound_right (int qLnb, double k, double theta, double t)
     Qnew[N]    = Qh[N-1];
     pL[qLnb_1] = P(N,Ah[N-1]);
   }
+  Gnew[N] = Gnew[N-1];
 }
 
 // The value at the bifurcation point at time t is predicted. NB: This should
@@ -1341,6 +1368,57 @@ void Tube :: bound_bif_right (double theta, double gamma)
   RD->Qnew[0] = xb[ 6];
 
   if (j >=ntrial) error ("arteries.C","Root not found in the bifurcation");
+
+// 父流入
+  if(Qnew[N]>0) {
+    Gnew[N] = Gnew[N-1];
+    // 不能同时流入
+    if(LD->Qnew[0]<=0 && RD->Qnew[0]<=0) error ("arteries.C","Sink in the bifurcation");
+    else if(LD->Qnew[0]>0 && RD->Qnew[0]<=0) {
+      RD->Gnew[0]=RD->Gnew[1];
+      LD->Gnew[0]=LD->Anew[0]*(RD->Gnew[0]*(-RD->Qnew[0])/RD->Anew[0]+Gnew[N]*Qnew[N]/Anew[N])/LD->Qnew[0];
+      }
+    else if(LD->Qnew[0]<=0 && RD->Qnew[0]>0) {
+      LD->Gnew[0]=LD->Gnew[1];
+      RD->Gnew[0]=RD->Anew[0]*(LD->Gnew[0]*(-LD->Qnew[0])/LD->Anew[0]+Gnew[N]*Qnew[N]/Anew[N])/RD->Qnew[0];
+      }
+    else if(LD->Qnew[0]>0 && RD->Qnew[0]>0) {
+      RD->Gnew[0]=RD->Anew[0]*Gnew[N]/Anew[N];
+      LD->Gnew[0]=LD->Anew[0]*Gnew[N]/Anew[N];
+      }
+    }
+    else if(Qnew[N]<0){
+      if(LD->Qnew[0]>=0 && RD->Qnew[0]>=0) error ("arteries.C","Source in the bifurcation");
+      else if(LD->Qnew[0]>=0 && RD->Qnew[0]<0) {
+        RD->Gnew[0]=RD->Gnew[1];
+        Gnew[N]=Anew[N]*RD->Gnew[0]/RD->Anew[0];
+        LD->Gnew[0]=LD->Anew[0]*RD->Gnew[0]/RD->Anew[0];
+      }
+      else if(LD->Qnew[0]<0 && RD->Qnew[0]>=0) {
+        LD->Gnew[0]=LD->Gnew[1];
+        Gnew[N]=Anew[N]*LD->Gnew[0]/LD->Anew[0];
+        RD->Gnew[0]=RD->Anew[0]*LD->Gnew[0]/LD->Anew[0];
+      }
+      else if(LD->Qnew[0]<0 && RD->Qnew[0]<0) {
+        LD->Gnew[0]=LD->Gnew[1];
+        RD->Gnew[0]=RD->Gnew[1];
+        Gnew[N]=Anew[N]*(LD->Gnew[0]*LD->Qnew[0]/LD->Anew[0]+RD->Gnew[0]*RD->Qnew[0]/RD->Anew[0])/Qnew[N];
+      }
+    }
+    else{
+      Gnew[N] = Gnew[N-1];
+      if(LD->Qnew[0]>0 && RD->Qnew[0]<0){
+        RD->Gnew[0]=RD->Gnew[1];
+        LD->Gnew[0]=LD->Anew[0]*RD->Gnew[0]/RD->Anew[0];
+      }
+      else if(LD->Qnew[0]<0 && RD->Qnew[0]>0){
+        LD->Gnew[0]=LD->Gnew[1];
+        RD->Gnew[0]=RD->Anew[0]*LD->Gnew[0]/LD->Anew[0];
+      }
+      else{
+        error ("arteries.C","Source or Sink in the bifurcation");
+      }
+    }
 }
 
 

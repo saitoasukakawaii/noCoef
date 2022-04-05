@@ -16,6 +16,7 @@
 #define _ARTERIES_H
 #include <cstdio>
 #include <cmath>
+#include <omp.h>
 // #define TOTAL_PRESSURE
 
 // Global parameters imported from main.h
@@ -146,7 +147,7 @@ public:
 
   // Finds the flux acc. to sys. eq.
   double Rvec (int k, int i, int j, double Q, double A);
-
+  double Rvec (int i, double Q, double A, double G);
   // Finds the rhs. of system eq.
   double Svec (int k, int i, int j, double Q, double A);
 
@@ -200,6 +201,7 @@ private:
   // The private function Q0 may only be accessed from the left boundary
   // function. It ensures a certain and given CO (defined in main.h).
   double Q0_init (double t, double k, double Period);
+  double G0_init (double t, double k, double Period);
 };
 
 // void solver (Tube *Arteries[], double tstart, double tend, double k, set<int>& ID_Out, set<int>& ID_Bif);
