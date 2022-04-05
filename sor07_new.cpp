@@ -23,9 +23,9 @@ int main(int argc, char *argv[])
   double rm4 = 0.03;
   int point = 4;
   nbrves     = 55;             // The number of vessels in the network.
-  string FileName = "topology55.txt";
-  set<int> ID_Out, ID_Bif;
-  get_ID(FileName, ID_Out, ID_Bif);
+  // string FileName = "topology55.txt";
+  // set<int> ID_Out, ID_Bif;
+  // get_ID(FileName, ID_Out, ID_Bif);
   // pressure and flow file point name:
   vector<string> nameP(nbrves, "./result/p");
   vector<string> nameQ(nbrves, "./result/q");
@@ -197,7 +197,7 @@ int main(int argc, char *argv[])
   // forthcomming while-loop.
 
   // Solves the equations until time equals tend.
-  solver (Arteries, tstart, tend, k, ID_Out, ID_Bif);
+  solver (Arteries, tstart, tend, k);
   tstart = tend;
   tend = tend + Deltat;
 
@@ -223,7 +223,7 @@ int main(int argc, char *argv[])
 
 
     // Solves the equations until time equals tend.
-    solver (Arteries, tstart, tend, k, ID_Out, ID_Bif);
+    solver (Arteries, tstart, tend, k);
     fprintf (stdout,".");
 
 

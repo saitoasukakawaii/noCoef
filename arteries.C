@@ -1333,7 +1333,81 @@ void Tube :: bound_bif_right (double theta, double gamma)
 // right boundaries. This is carried out as long as the time hasn't passed
 // the desired ending time (tend) which is passed to the function as a
 // parameter.
-void solver (Tube *Arteries[], double tstart, double tend, double k, set<int>& ID_Out, set<int>& ID_Bif)
+// void solver (Tube *Arteries[], double tstart, double tend, double k, set<int>& ID_Out, set<int>& ID_Bif)
+// {
+//   // The following definitions only used when a variable time-stepping is
+//   // used.
+
+//   double t    = tstart;
+//   int qLnb = (int) fmod(t/k,tmstps);
+
+//   // As long as we haven't passed the desired ending time do:
+//   while (t < tend)
+//   {
+//     // Check that the step we take is valid. If this error occurs when forcing
+//     // a constant step-size the program must be terminated.
+//     if (t+k > tend)
+//     {
+//       double kold = k;
+//       k = tend - t;
+//       printf("ERROR (arteries.C): Step-size changed, t+k=%10.15f, tend=%10.15f k=%10.15f kold=%10.15f\n",t+kold,tend,k,kold);
+//     }
+
+//     // Check that the CFL-condition applies.
+//     // CFL condition mean small h the k should also be small. 
+//     for (int i=0; i<nbrves; i++)
+//     {
+//       if (k > Arteries[i] -> CFL())
+//       {
+//         error("arteries.C","Step-size too large CFL-condition violated\n");
+//       }
+//     }
+
+//     // // solve for interior points, by calling step.
+//     // for (int i=0; i<nbrves; i++)
+//     // {
+//     //   Arteries[i] -> step (k);
+//     // }
+    
+//     // // Update left and right boundaries, and the bifurcation points.
+//     // Arteries[0] -> bound_left(t+k, k, Period);
+//     // for (auto i: ID_Out)
+//     // {
+//     //   Arteries[i] -> bound_right (qLnb, k, k/Arteries[i]->h, t);
+//     // }
+//     // for (auto i: ID_Bif)
+//     // {
+//     //   double theta = k/Arteries[i]->h;
+//     //   double gamma = k/2;
+//     //   Arteries[i] -> bound_bif_right (theta, gamma);
+//     // }
+//     // for (int i=0; i<nbrves; i++)
+//     // {
+//     //   if (Arteries[i] -> LD == 0)
+//     //   {
+//     //     Arteries[i] -> bound_right (qLnb, k, k/Arteries[i]->h, t);
+//     //   }
+//     //   else if ((i==15) || (i==17)) { continue; }
+//     //   else
+//     //   {
+//     //     double theta = k/Arteries[i]->h;
+//     //       double gamma = k/2;
+//     //     Arteries[i] -> bound_bif_right (theta, gamma);
+//     //   }
+//     //   if (i == 18)
+//     //   {
+//     //   	double theta = k/Arteries[i]->h;
+//     //       double gamma = k/2;
+//     //     Arteries[i] -> bound_bif_left (theta, gamma);
+//     //   }
+//     // }
+//     // Update the time and position within one period.
+//     t = t + k;
+//     qLnb = (qLnb + 1) % tmstps;
+//   }
+// }
+
+void solver (Tube *Arteries[], double tstart, double tend, double k)
 {
   // The following definitions only used when a variable time-stepping is
   // used.
@@ -1354,7 +1428,6 @@ void solver (Tube *Arteries[], double tstart, double tend, double k, set<int>& I
     }
 
     // Check that the CFL-condition applies.
-    // CFL condition mean small h the k should also be small. 
     for (int i=0; i<nbrves; i++)
     {
       if (k > Arteries[i] -> CFL())
@@ -1368,39 +1441,21 @@ void solver (Tube *Arteries[], double tstart, double tend, double k, set<int>& I
     {
       Arteries[i] -> step (k);
     }
-    
     // Update left and right boundaries, and the bifurcation points.
     Arteries[0] -> bound_left(t+k, k, Period);
-    for (auto i: ID_Out)
+    for (int i=0; i<nbrves; i++)
     {
-      Arteries[i] -> bound_right (qLnb, k, k/Arteries[i]->h, t);
+      if (Arteries[i] -> LD == 0)
+      {
+        Arteries[i] -> bound_right (qLnb, k, k/Arteries[i]->h, t);
+      }
+      else
+      {
+        double theta = k/Arteries[i]->h;
+	double gamma = k/2;
+        Arteries[i] -> bound_bif_right (theta, gamma);
+      }
     }
-    for (auto i: ID_Bif)
-    {
-      double theta = k/Arteries[i]->h;
-      double gamma = k/2;
-      Arteries[i] -> bound_bif_right (theta, gamma);
-    }
-    // for (int i=0; i<nbrves; i++)
-    // {
-    //   if (Arteries[i] -> LD == 0)
-    //   {
-    //     Arteries[i] -> bound_right (qLnb, k, k/Arteries[i]->h, t);
-    //   }
-    //   else if ((i==15) || (i==17)) { continue; }
-    //   else
-    //   {
-    //     double theta = k/Arteries[i]->h;
-    //       double gamma = k/2;
-    //     Arteries[i] -> bound_bif_right (theta, gamma);
-    //   }
-    //   if (i == 18)
-    //   {
-    //   	double theta = k/Arteries[i]->h;
-    //       double gamma = k/2;
-    //     Arteries[i] -> bound_bif_left (theta, gamma);
-    //   }
-    // }
     // Update the time and position within one period.
     t = t + k;
     qLnb = (qLnb + 1) % tmstps;

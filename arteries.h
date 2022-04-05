@@ -200,6 +200,7 @@ private:
   double Q0_init (double t, double k, double Period);
 };
 
-void solver (Tube *Arteries[], double tstart, double tend, double k, set<int>& ID_Out, set<int>& ID_Bif);
+// void solver (Tube *Arteries[], double tstart, double tend, double k, set<int>& ID_Out, set<int>& ID_Bif);
+void solver (Tube *Arteries[], double tstart, double tend, double k);
 
 #endif

@@ -19,7 +19,7 @@
 
 int    nbrves, N_aorta;               // Number of vessels in the tree.
 
-int    tmstps = 8192,                 // The number of timesteps per period.
+int    tmstps = 16384,                 // The number of timesteps per period.
        plts   = 1024;                 // Number of plots per period.
 
 const char *CO_filename = "input.dat";     // Input flow file at the heart.
@@ -71,7 +71,7 @@ double conv   = 1332.20,              // Conversion from mmHg to SI-units.
        k      = Period/tmstps,        // Length of a timestep.
        Deltat = Period/plts,          // Interval between each point plottet.
        // p0     = 55.0/rho/g/Lr*conv,   // Ensures a certain diastolic pressure.
-        p0     = 55./rho/g/Lr*conv,   // Ensures a certain diastolic pressure.
+        p0     = 75./rho/g/Lr*conv,   // Ensures a certain diastolic pressure.
 
        *fjac[18],                     // Work space used by bound_bif.
        xr, f, df;                     // Work space used by bound_right.
