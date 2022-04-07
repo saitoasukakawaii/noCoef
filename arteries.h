@@ -201,7 +201,7 @@ private:
   // The private function Q0 may only be accessed from the left boundary
   // function. It ensures a certain and given CO (defined in main.h).
   double Q0_init (double t, double k, double Period);
-  double G0_init (double t, double k, double Period);
+  double G0_init (double t, double Period);
 };
 
 // void solver (Tube *Arteries[], double tstart, double tend, double k, set<int>& ID_Out, set<int>& ID_Bif);

@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
     string SuccessInfo2 = "File "+to_string(j)+"q OK \n";
     string FailInfo2 = "File "+to_string(j)+"q NOT OK \n";
     if (fq[i]) fprintf(stdout, "%s", (SuccessInfo2).c_str()); else error("main.C", (FailInfo2).c_str());
-        fq[i] = fopen((nameQ[i]).c_str(), "w");
+    fG[i] = fopen((nameG[i]).c_str(), "w");
     string SuccessInfo3 = "File "+to_string(j)+"G OK \n";
     string FailInfo3 = "File "+to_string(j)+"G NOT OK \n";
     if (fG[i]) fprintf(stdout, "%s", (SuccessInfo3).c_str()); else error("main.C", (FailInfo3).c_str());
@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
   clock_t c1 = clock();        // Only used when timing the program.
   tstart     = 0.0;            // Starting time.
   finaltime  = 8*Period;       // Final end-time during a simulation.
-  tend       = 7*Period;       // Timestep before the first plot-point
+  tend       = 0*Period;       // Timestep before the first plot-point
                                // is reached.
 
   // The number of vessels in the network is given when the governing array of
@@ -270,6 +270,9 @@ int main(int argc, char *argv[])
     string SuccessInfo2 = "Close "+to_string(j)+"q OK \n";
     string FailInfo2 = "Close "+to_string(j)+"q NOT OK \n";
     if (fclose(fq[i]) != EOF) fprintf(stdout, "%s", (SuccessInfo2).c_str()); else error("main.C", (FailInfo2).c_str());
+    string SuccessInfo3 = "Close "+to_string(j)+"G OK \n";
+    string FailInfo3 = "Close "+to_string(j)+"G NOT OK \n";
+    if (fclose(fG[i]) != EOF) fprintf(stdout, "%s", (SuccessInfo3).c_str()); else error("main.C", (FailInfo3).c_str());
   }
   if (fclose(fA1) != EOF) fprintf(stdout, "Close 1A OK\n"); else error("main.C", "Close 1A NOT OK");
   if (fclose(fC1) != EOF) fprintf(stdout, "Close 1C OK\n"); else error("main.C", "Close 1C NOT OK");

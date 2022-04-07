@@ -61,6 +61,30 @@ def plot_qwave(number):
                 dpi=120,
                 pad_inches=0.0)
     plt.close()
+    
+def plot_Gwave(number):
+    '''
+    scr: which result, number: artery's order
+    '''
+    A = np.loadtxt("../result/G" + str(number))
+    [XP, YP, ZP] = gnuplot(A)
+    [a, b] = np.shape(XP)
+    ind = [0*b//4, 1*b//4, 2*b//4, 3*b//4, b-1]
+    Color = ["cyan", "blue", "green", "yellow", "red"]
+    N = len(ind)
+    time = XP[:, 0]
+    fig = plt.figure(figsize=(10,8))
+    ax = fig.add_subplot()
+    ax.set_title("NO")
+    for i in range(N):
+        ax.plot(time, ZP[:, ind[i]], color=Color[i], linewidth=5)
+    ax.set_xlabel("Time (s)")
+    ax.set_ylabel("NO")
+    ax.grid(which='both', linestyle='--')
+    plt.savefig("./NO"+str(number)+".tif",
+                dpi=120,
+                pad_inches=0.0)
+    plt.close()
 
 if __name__ == "__main__":
     # this section is used to obtain all object diractories in the current dir
@@ -74,6 +98,7 @@ if __name__ == "__main__":
     for i in Arteries:
         plot_pwave(i)
         plot_qwave(i)
+        plot_Gwave(i)
     # root = os.getcwd()
     # matchStr = re.compile(r"jcj_58_jcj_inlet.*")
     # dirAll = []
