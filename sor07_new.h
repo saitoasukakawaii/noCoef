@@ -19,12 +19,12 @@
 
 int    nbrves, N_aorta;               // Number of vessels in the tree.
 // 8192
-int    tmstps = 8000,                 // The number of timesteps per period.
-       plts   = 1000;                 // Number of plots per period.
+int    tmstps = 8192,                 // The number of timesteps per period.
+       plts   = 1024;                 // Number of plots per period.
 
 const char *CO_filename = "FlowProfile/jcj_8192.dat";     // Input flow file at the heart.
 
-double conv   = 1332.20,              // Conversion from mmHg to SI-units.
+double conv   = 1333.20,              // Conversion from mmHg to SI-units.
        rho    = 1.055,                // Density of blood [g/cm^3].
        mu     = 0.049,                // Viscosity of blood [g/cm/s].
        mu_pl  = mu,                   // Viscosity of blood [g/cm/s].

@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
   }
   const char *nameA1 = "./result/A1";
   const char *nameC1 = "./result/C1";
-
+  FILE *fheart;
 
   // open pressure and flow file and declare the point:
   for(int i=0;i<nbrves;i++)
@@ -58,14 +58,17 @@ int main(int argc, char *argv[])
   if (fA1) fprintf(stdout, "File 1A OK \n"); else error("main.C", "File 1A NOT OK");
   FILE *fC1 = fopen(nameC1, "w");
   if (fC1) fprintf(stdout, "File 1C OK \n"); else error("main.C", "File 1C NOT OK");
-
+  fheart = fopen("./result/heart0D", "w");
+  string SuccessInfo = "File heart0D OK \n";
+  string FailInfo = "File heart0D NOT OK \n";
+  if (fheart) fprintf(stdout, "%s", (SuccessInfo).c_str()); else error("main.C", (FailInfo).c_str());
   // Workspace used by bound_bif
   for(int i=0; i<18; i++) fjac[i] = new double[18];
 
   clock_t c1 = clock();        // Only used when timing the program.
   tstart     = 0.0;            // Starting time.
-  finaltime  = 8*Period;       // Final end-time during a simulation.
-  tend       = 7*Period;       // Timestep before the first plot-point
+  finaltime  = 10*Period;       // Final end-time during a simulation.
+  tend       = 0*Period;       // Timestep before the first plot-point
                                // is reached.
 
   // The number of vessels in the network is given when the governing array of
@@ -237,7 +240,7 @@ int main(int argc, char *argv[])
     }
     Arteries[0]->printAxt(fA1, tend, 0);
     Arteries[0]->printCxt(fC1, tend, 0);
-
+    Arteries[0]->printHeart(fheart, tend);
 
     // The time within each print is increased.
     tstart = tend;
@@ -275,5 +278,6 @@ int main(int argc, char *argv[])
   }
   if (fclose(fA1) != EOF) fprintf(stdout, "Close 1A OK\n"); else error("main.C", "Close 1A NOT OK");
   if (fclose(fC1) != EOF) fprintf(stdout, "Close 1C OK\n"); else error("main.C", "Close 1C NOT OK");
+  if (fclose(fheart) != EOF) fprintf(stdout, "Close heart0D OK\n"); else error("main.C", "Close heart0D NOT OK");
   return 0;
 }

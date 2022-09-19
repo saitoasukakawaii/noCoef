@@ -160,17 +160,17 @@ Tube :: Tube (double Length,
   // Read from file data for the inflow profile.
   if (init == 1)
   {
-    Q0 = new double[tmstps+1];
-
-    FILE *fi = fopen (CO_filename, "r");
-    if (fi) fprintf(stdout, "Q0 opened\n");
-    else error ("arteries.C"," Q0 NOT OK");
-
-    for (int i=0; i<=tmstps; i++)
-    {
-      fscanf(fi,"%lf",&Q0[i]);
-      Q0[i] = Q0[i]/q; // If the indata have dimensions they should be made
-                       // non-dimensional.
+    Q0 = 0.;
+    P0 = p0*rho*g*Lr;
+    yRK4[0] = 0.00192601;
+    yRK4[1] = 0.94724400;
+    yRK4[2] = 133.372000;
+    yRK4[3] = 0.;
+    yRK4[4] = 0.;
+    for(int i=0;i<numSol;++i){
+      pRK4[i] = 0.;
+      dydt[i] = 0.;
+      kRK4[i] = 0.;
     }
   }
 
@@ -234,17 +234,22 @@ Tube :: ~Tube ()
 
 // ----------------------PLOTTING ROUTINES WITH DIMENSIONS ------------
 
-void Tube :: printQ0 (FILE *fd)
-{
-  for (int i=0; i<=tmstps; i++)
-  {
-    fprintf (fd, "%15.10f\n", Q0[i]*q);
-  }
-}
+// void Tube :: printQ0 (FILE *fd)
+// {
+//   for (int i=0; i<=tmstps; i++)
+//   {
+//     fprintf (fd, "%15.10f\n", Q0[i]*q);
+//   }
+// }
 
 // The following functions prints p, q(x,t) in terms of the re-dimensionalized
 // variables. The parameters for the function are the  position (x),
 // and the time (t).
+void Tube :: printHeart (FILE *fd, double t)
+{
+  fprintf (fd, "%13.10f %15.10f %15.10f %15.10f %15.10f %15.10f\n", t*Lr3/q, yRK4[0], yRK4[1], yRK4[2], yRK4[3], yRK4[4]);
+}
+
 void Tube :: printPt (FILE *fd, double t, int i)
 {
   fprintf (fd, "%13.10f %15.10f\n", t*Lr3/q, (P(i,Anew[i])+p0)*rho*g*Lr/conv);
@@ -553,9 +558,7 @@ double Tube :: Rvec (int k, int i, int j, double Q, double A)
   if(k==1) return(Q); else
   if(k==2) return(sq(Q)/A + ((j==0)?B(i,A):Bh(i,A)));
   else error ("arteries.cxx","Call of non-existing vector-component of R");
-  return(0);double ind_b_diss = -1.2;
-double Area_top_diss = 1.51285/Lr2;
-double Area_bot_diss = 1.51285/Lr2;
+  return(0);
 }
 
 // Similarly the right hand side of the system of equations must be determined
@@ -619,11 +622,32 @@ void Tube :: step (double k)
 // chosen in order to ensure a certain CO (specified in main.h). Hence we have
 // the specified value of b. Further the period (dimension-less) is assumed
 // to be Period.
-double Tube :: Q0_init (double t, double k, double Period)
+void Tube :: Q0_init (double t, double k)
 {
-  if (t <= Period) return (Q0[int(t/k)]); else
-  if (t >  Period) return (Q0_init((t-Period),k,Period));
-  else return (0);
+  
+  double dt = k*Lr3/q;
+  // for(int i=0;i<numSol;++i)
+  // {
+  //   dydt[i] = 0.;
+  //   pRK4[i] = 0.;
+  //   kRK4[i] = 0.;
+  // }
+  for (int i=0;i<rk4N;++i)
+  {
+    double rk4time = t*Lr3/q+rk4c[i]*dt;
+    dydt_heart(rk4time);// time and dt
+    for(int j=0;j<numSol;++j)
+    {
+      kRK4[j] = kRK4[j]*rk4a[i]+dt*dydt[j];
+      pRK4[j] = pRK4[j]+rk4b[i]*kRK4[j];
+    }     
+  }
+  for(int j=0;j<numSol;++j)
+  {
+    yRK4[j] = pRK4[j];
+  }
+  Q0 = yRK4[4];
+   
 }
 
 
@@ -633,13 +657,100 @@ double Tube :: Q0_init (double t, double k, double Period)
 // when the tube is an inlet vessel.
 void Tube :: bound_left (double t, double k, double Period)
 {
-  Qnew[0]   = Q0_init(t,k,Period);
-
+  // 
+  Q0_init(t,k);
+  Qnew[0] = Q0/q;
   if (int(t/k) < 0)
     printf("t/k negative in bound_left\n");
-  double Qhm05 = Qnew[0]+Q0_init(t-k,k,Period) - Qh[0];
-  double R1hm05    = Qhm05;
-  Anew[0]   = Aold[0] - k*(R1h[0] - R1hm05)/h;
+  double qS, aS, cS, HnS, uS;
+  qS = aS = cS = HnS = 0.0;
+  negchar(k/h, qS, aS, cS, HnS);
+  uS = qS/aS;
+  Anew[0]   = aS + (Qnew[0] - qS)/(uS + cS) + k*HnS;
+  // Then Anew[0] get P0
+  P0 = (P (0, Anew[0]) + p0)*rho*g*Lr;
+
+
+  // double Qhm05 = Qnew[0]+Q0_init(t-k,k,Period) - Qh[0];
+  // double R1hm05    = Qhm05;
+  // Anew[0]   = Aold[0] - k*(R1h[0] - R1hm05)/h;
+}
+
+double Tube :: elastance_lv(const double &t)
+{
+
+  double Tvcp = 0.3*std::sqrt(Tper);         // durations of left ventricular contraction
+  double Tvrp = 0.5*Tvcp;
+  double Tvcpvrp = Tvcp+Tvrp;
+	double time = std::fmod(t,Tper);
+	double e;
+
+	if (time <=Tvcpvrp){
+	    if (time <= Tvcp)
+	        e=0.5*( 1-cos(M_PI*time/Tvcp) );
+	    else
+	        e=0.5*( 1+cos(M_PI*(time-Tvcp)/Tvrp) );
+	        }
+	else
+	    e=0;
+	    	
+	return e*EA+EB;
+}
+
+void Tube :: dydt_heart(const double &t){
+	double p_lv, dp_la_lv, dp_lv_a;
+	double Aeff_av, Aeff_va, B_va, L_va, B_av, L_av;
+	double RdVlv = 0.0005*(yRK4[1]-yRK4[4]);
+	if (RdVlv > 0.9) RdVlv = 0.5;
+	p_lv = elastance_lv(t)*(yRK4[2]-v_lv0)/(1-RdVlv);
+	dp_la_lv = p_la-p_lv;
+	dp_lv_a = p_lv-P0;
+    // dp_lv_a = p_lv-p_a;
+    
+    if (yRK4[0] > 1.) yRK4[0] = 1.;
+    if (yRK4[0] < 0.) yRK4[0] = 0.;
+    if (dp_la_lv>0.) dydt[0] = (1-yRK4[0])*K_avo*dp_la_lv;
+    else dydt[0] = yRK4[0]*K_avc*dp_la_lv;
+    
+    Aeff_av = yRK4[0]*Aeff_av_max;
+    
+//  flow throw la-lv valve
+    if (Aeff_av < 1e-6)
+    { 
+        dydt[1] = 0.;
+        yRK4[1] = 0.;
+    }
+    else 
+    {
+    	B_av = 0.5*rho/(Aeff_av*Aeff_av);
+    	L_av = rho*l_av/Aeff_av;
+      dydt[1] = (dp_la_lv-B_av*yRK4[1]*abs(yRK4[1]))/L_av; 
+    }
+    
+    dydt[2] = yRK4[1]-yRK4[4];
+//  防止越界
+    if (yRK4[3] > 1.) yRK4[3] = 1.;
+    if (yRK4[3] < 0.) yRK4[3] = 0.;
+    if (dp_lv_a>0.) dydt[3] = (1-yRK4[3])*K_vao*dp_lv_a;
+    else dydt[3] = yRK4[3]*K_vac*dp_lv_a;
+    
+    Aeff_va = yRK4[3]*Aeff_va_max;
+    
+//  flow throw lv-aorta valve
+    if (Aeff_va < 1e-6)
+    {
+        dydt[4] = 0.;
+        yRK4[4] = 0.;
+    }
+    else
+    {
+    	B_va = 0.5*rho/(Aeff_va*Aeff_va);
+    	L_va = rho*l_va/Aeff_va;
+        // dydt[4] = (dp_lv_a-B_va*y[4]*abs(y[4])-R_c*y[4])/L_va;
+      dydt[4] = (dp_lv_a-B_va*yRK4[4]*abs(yRK4[4]))/L_va;
+    }
+    
+	return;
 }
 
 // The value at the right boundary at time t is predicted. NB: This should
@@ -663,6 +774,11 @@ double Tube :: Hp (int i, double Q, double A)
   return (F(Q,A) - A*dPdx1(i,A)/Fr2)/(-Q/A + c(i,A));
 }
 
+double Tube :: Hn (int i, double Q, double A)
+{
+    return (F(Q,A) - A*dPdx1(i,A)/Fr2)/(-Q/A - c(i,A));
+}
+
 void Tube :: poschar (double theta, double &qR, double &aR, double &cR, double &HpR)
 {
   double ctm1  = c  (N, Aold[N]);
@@ -679,6 +795,25 @@ void Tube :: poschar (double theta, double &qR, double &aR, double &cR, double &
   aR  = Aold[N] - (Aold[N] - Aold[N-1])*ch;
   cR  = ctm1    - (ctm1  - c (N-1,Aold[N-1]))*ch;
   HpR = Hptm1   - (Hptm1 - Hp(N-1,Qold[N-1],Aold[N-1]))*ch;
+}
+
+void Tube :: negchar (double theta, double &qS, double &aS, double &cS, double &HnS)
+{
+    double ctm1  = c(0, Aold[0]);
+    double Hntm1 = Hn(0, Qold[0], Aold[0]);
+    double uS    = Qold[0]/Aold[0];
+    double ch    = (uS - ctm1) * theta;
+    
+    if ( ctm1 - uS < 0)
+    {
+        printf("ctm1 - uS < 0, CFL condition violated\n");
+        exit(1);
+    }
+    
+    qS  = Qold[0] + (Qold[0] - Qold[1])*ch;
+    aS  = Aold[0] + (Aold[0] - Aold[1])*ch;
+    cS  = ctm1    + (ctm1  - c (1,Aold[1]))*ch;
+    HnS = Hntm1   + (Hntm1 - Hn(1,Qold[1],Aold[1]))*ch;
 }
 
 // using method of characteristics at right boundary 
@@ -1381,26 +1516,7 @@ void solver (Tube *Arteries[], double tstart, double tend, double k, set<int>& I
       double gamma = k/2;
       Arteries[i] -> bound_bif_right (theta, gamma);
     }
-    // for (int i=0; i<nbrves; i++)
-    // {
-    //   if (Arteries[i] -> LD == 0)
-    //   {
-    //     Arteries[i] -> bound_right (qLnb, k, k/Arteries[i]->h, t);
-    //   }
-    //   else if ((i==15) || (i==17)) { continue; }
-    //   else
-    //   {
-    //     double theta = k/Arteries[i]->h;
-    //       double gamma = k/2;
-    //     Arteries[i] -> bound_bif_right (theta, gamma);
-    //   }
-    //   if (i == 18)
-    //   {
-    //   	double theta = k/Arteries[i]->h;
-    //       double gamma = k/2;
-    //     Arteries[i] -> bound_bif_left (theta, gamma);
-    //   }
-    // }
+
     // Update the time and position within one period.
     t = t + k;
     qLnb = (qLnb + 1) % tmstps;
