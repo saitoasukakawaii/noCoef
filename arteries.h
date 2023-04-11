@@ -41,7 +41,8 @@ public:
 	       K_loss_LP,
 	       K_loss_RP;
   double ff1, ff2, ff3;
-  double termresist;
+  double ffa1, ffa2, ffa3;
+  double rmin, termresist;
 
   int N;                       // The number of grid points along the vessel
   double h;                    // The interval length of delta x
@@ -65,12 +66,13 @@ public:
         double topradius, double botradius,
         Tube *LeftParent, Tube *RightParent,
         Tube *LeftDaughter, Tube *RightDaughter,
-        double rmin, double points, int init, double KLD, double KRD, double KLP, double KRP,
+        double _rmin, double points, int init, double KLD, double KRD, double KLP, double KRP,
         double f1, double f2, double f3, double fa1, double fa2, double fa3, double trmrst);
                                                          // Constructor.
   ~Tube ();                                              // Destructor.
 
-
+  void reinitResistance();
+  void initSmallTree();
   // Prints P(x_fixed,t), A(x_fixed,t), F(x_fixed,t), or Q(x_fixed,t) for all
   // t's along the tube.
   void printQ0  (FILE *fd);
@@ -201,6 +203,9 @@ private:
 };
 
 // void solver (Tube *Arteries[], double tstart, double tend, double k, set<int>& ID_Out, set<int>& ID_Bif);
-void solver (Tube *Arteries[], double tstart, double tend, double k);
+void solver (Tube *Arteries[], double tstart, double tend, double k, 
+             const std::set<int> &ID_Out, 
+             const std::set<int> &ID_Bif, 
+             const std::set<int> &ID_Merge);
 
 #endif

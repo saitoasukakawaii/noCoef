@@ -66,7 +66,7 @@ Tube :: Tube (double Length,
               double topradius, double botradius,
               Tube *LeftParent, Tube *RightParent,
               Tube *LeftDaughter, Tube *RightDaughter,
-              double rmin, double points, int init, double KLD, double KRD, double KLP, double KRP,
+              double _rmin, double points, int init, double KLD, double KRD, double KLP, double KRP,
               double f1, double f2, double f3, double fa1, double fa2, double fa3, double trmrst):
 	L(Length),
 	rtop(topradius),
@@ -83,6 +83,10 @@ Tube :: Tube (double Length,
 	ff1(f1),
 	ff2(f2),
 	ff3(f3),
+  ffa1(fa1),
+  ffa2(fa2),
+  ffa3(fa3),
+  rmin(_rmin),
     termresist(trmrst)
 {
   // Initialization of the basic parameters
@@ -174,24 +178,6 @@ Tube :: Tube (double Length,
     }
   }
 
-  // In case of an end-tube evaluate the impedances for the boundary condition.
-  // This is done by calling the f90 routine root_imp which calculates the
-  // impedance at the root of a structured tree. The underscores is sensitive
-  // to the compiler but can be seen at the bottom of the file root_imp.o.
-  if (LD == 0)
-  {
-    fprintf(stdout,"Calling f90 subroutines\n");
-
-    impedance_driver_(&tmstps,&Period,&fa1,&fa2,&fa3,&rho,&mu_pl,&rbot,&rmin,y,&Lr,&Fr2,&q,&g,&termresist);
-    printf("Finished with f90 subroutines.\n\n");
-
-    // Initialize the array pL used when determining the convolution
-    // in the right boundary condition (see the subroutine bound_right).
-    for (int j=0; j<tmstps; j++)
-    {
-      pL[j] = 0.0;
-    };
-  };
 }
 
 // The destructor. When the tube-objects terminates, all arrays are deleted,
@@ -231,7 +217,17 @@ Tube :: ~Tube ()
   delete[] dp1dr0;
   delete[] dp1dr0h;
 }
+// set out flow condition for small tree 20230411 17:25
+void Tube :: initSmallTree(){
+  reinitResistance();
+  for (int j=0; j<tmstps; j++) pL[j] = 0.0;
+}
 
+void Tube :: reinitResistance(){
+  fprintf(stdout,"Calling f90 subroutines to init Resistance y\n");
+  impedance_driver_(&tmstps,&Period,&ffa1,&ffa2,&ffa3,&rho,&mu_pl,&rbot,&rmin,y,&Lr,&Fr2,&q,&g,&termresist);
+  printf("Finished to init Resistance y with f90 subroutines.\n\n");
+}
 // ----------------------PLOTTING ROUTINES WITH DIMENSIONS ------------
 
 void Tube :: printQ0 (FILE *fd)
@@ -782,19 +778,15 @@ void Tube :: bound_bif_left (double theta, double gamma)
   const int ntrial = 40;
   int LPN = LP->N;    
   int RPN = RP->N;
-  
   double g1   = Qold[0]     - theta*R2h[0] + gamma*S2h[0];
   double g2   = LP->Qold[LPN] + theta*(LP->R2h[LPN-1]) + gamma*(LP->S2h[LPN-1]);
   double g2a  = RP->Qold[RPN] + theta*(RP->R2h[RPN-1]) + gamma*(RP->S2h[RPN-1]);
-
   double k1   = Aold[0]     - theta*R1h[0];
   double k2   = LP->Aold[LPN] + theta*(LP->R1h[LPN-1]);
   double k2a  = RP->Aold[RPN] + theta*(RP->R1h[RPN-1]);
-
   double k3   = Qh[0]/2;
   double k4   = LP->Qh[LPN-1]/2;
   double k4a  = RP->Qh[RPN-1]/2;
-
   double k5   = Ah[0]/2;
   double k6   = LP->Ah[LPN-1]/2;
   double k6a  = RP->Ah[RPN-1]/2;
@@ -808,7 +800,7 @@ void Tube :: bound_bif_left (double theta, double gamma)
   xb[ 4] = (LP->Qold[LPN] + LP->Qold[LPN-1])/2; //Initial guess for Q2_xb n+0.5
   xb[ 5] =  LP->Qold[LPN];                      //Initial guess for Q2_xb+0.5 n+0.5
   xb[ 6] =  RP->Qh[RPN-1];                      //Initial guess for Q3_xb n+1
-  xb[ 7] = (RP->Qold[RPN] + RD->Qold[RPN-1])/2; //Initial guess for Q3_xb n+0.5
+  xb[ 7] = (RP->Qold[RPN] + RP->Qold[RPN-1])/2; //Initial guess for Q3_xb n+0.5
   xb[ 8] =  RP->Qold[RPN];                      //Initial guess for Q3_xb+0.5 n+0.5
   xb[ 9] =  Ah[0];                              //Initial guess for A1_xb n+1
   xb[10] = (Aold[1] + Aold[0])/2;               //Initial guess for A1_xb^n+0.5
@@ -824,7 +816,6 @@ void Tube :: bound_bif_left (double theta, double gamma)
   double k7n   = K_loss_LP/2; //32*mu/(2*RD->rtop*rho*q);
   double k7anh = K_loss_RP/2; //32*mu/(2*LD->rtop*rho*q);
   double k7an  = K_loss_RP/2; //32*mu/(2*RD->rtop*rho*q);
-
   // The residuals (fvec), and  the Jacobian is determined, and if possible
   // the system of equations is solved.
   while (j <= ntrial && ok==false) // Find the zero
@@ -1035,7 +1026,6 @@ void Tube :: bound_bif_left (double theta, double gamma)
 
     j = j+1;
   }
-
   // Solutions is applied, and right boundary is updated.
   Anew[0]     = xb[ 9];
   Qnew[0]     = xb[ 0];
@@ -1331,81 +1321,10 @@ void Tube :: bound_bif_right (double theta, double gamma)
 // right boundaries. This is carried out as long as the time hasn't passed
 // the desired ending time (tend) which is passed to the function as a
 // parameter.
-// void solver (Tube *Arteries[], double tstart, double tend, double k, set<int>& ID_Out, set<int>& ID_Bif)
-// {
-//   // The following definitions only used when a variable time-stepping is
-//   // used.
-
-//   double t    = tstart;
-//   int qLnb = (int) fmod(t/k,tmstps);
-
-//   // As long as we haven't passed the desired ending time do:
-//   while (t < tend)
-//   {
-//     // Check that the step we take is valid. If this error occurs when forcing
-//     // a constant step-size the program must be terminated.
-//     if (t+k > tend)
-//     {
-//       double kold = k;
-//       k = tend - t;
-//       printf("ERROR (arteries.C): Step-size changed, t+k=%10.15f, tend=%10.15f k=%10.15f kold=%10.15f\n",t+kold,tend,k,kold);
-//     }
-
-//     // Check that the CFL-condition applies.
-//     // CFL condition mean small h the k should also be small. 
-//     for (int i=0; i<nbrves; i++)
-//     {
-//       if (k > Arteries[i] -> CFL())
-//       {
-//         error("arteries.C","Step-size too large CFL-condition violated\n");
-//       }
-//     }
-
-//     // // solve for interior points, by calling step.
-//     // for (int i=0; i<nbrves; i++)
-//     // {
-//     //   Arteries[i] -> step (k);
-//     // }
-    
-//     // // Update left and right boundaries, and the bifurcation points.
-//     // Arteries[0] -> bound_left(t+k, k, Period);
-//     // for (auto i: ID_Out)
-//     // {
-//     //   Arteries[i] -> bound_right (qLnb, k, k/Arteries[i]->h, t);
-//     // }
-//     // for (auto i: ID_Bif)
-//     // {
-//     //   double theta = k/Arteries[i]->h;
-//     //   double gamma = k/2;
-//     //   Arteries[i] -> bound_bif_right (theta, gamma);
-//     // }
-//     // for (int i=0; i<nbrves; i++)
-//     // {
-//     //   if (Arteries[i] -> LD == 0)
-//     //   {
-//     //     Arteries[i] -> bound_right (qLnb, k, k/Arteries[i]->h, t);
-//     //   }
-//     //   else if ((i==15) || (i==17)) { continue; }
-//     //   else
-//     //   {
-//     //     double theta = k/Arteries[i]->h;
-//     //       double gamma = k/2;
-//     //     Arteries[i] -> bound_bif_right (theta, gamma);
-//     //   }
-//     //   if (i == 18)
-//     //   {
-//     //   	double theta = k/Arteries[i]->h;
-//     //       double gamma = k/2;
-//     //     Arteries[i] -> bound_bif_left (theta, gamma);
-//     //   }
-//     // }
-//     // Update the time and position within one period.
-//     t = t + k;
-//     qLnb = (qLnb + 1) % tmstps;
-//   }
-// }
-
-void solver (Tube *Arteries[], double tstart, double tend, double k)
+void solver (Tube *Arteries[], double tstart, double tend, double k, 
+             const std::set<int> &ID_Out, 
+             const std::set<int> &ID_Bif, 
+             const std::set<int> &ID_Merge)
 {
   // The following definitions only used when a variable time-stepping is
   // used.
@@ -1441,18 +1360,18 @@ void solver (Tube *Arteries[], double tstart, double tend, double k)
     }
     // Update left and right boundaries, and the bifurcation points.
     Arteries[0] -> bound_left(t+k, k, Period);
-    for (int i=0; i<nbrves; i++)
-    {
-      if (Arteries[i] -> LD == 0)
-      {
-        Arteries[i] -> bound_right (qLnb, k, k/Arteries[i]->h, t);
-      }
-      else
-      {
-        double theta = k/Arteries[i]->h;
-	double gamma = k/2;
-        Arteries[i] -> bound_bif_right (theta, gamma);
-      }
+    for (auto i: ID_Bif){
+      double theta = k/Arteries[i]->h;
+	    double gamma = k/2;
+      Arteries[i] -> bound_bif_right (theta, gamma);
+    }
+    for (auto i: ID_Merge){
+      double theta = k/Arteries[i]->h;
+	    double gamma = k/2;
+      Arteries[i] -> bound_bif_left (theta, gamma);
+    }
+    for (auto i: ID_Out){
+      Arteries[i] -> bound_right (qLnb, k, k/Arteries[i]->h, t);
     }
     // Update the time and position within one period.
     t = t + k;

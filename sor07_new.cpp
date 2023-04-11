@@ -21,11 +21,13 @@ int main(int argc, char *argv[])
 
   // normal range of rmin of small vessel is 0.01~0.04
   double rm4 = 0.03;
-  int point = 4;
-  nbrves     = 55;             // The number of vessels in the network.
-  // string FileName = "topology55.txt";
-  // set<int> ID_Out, ID_Bif;
-  // get_ID(FileName, ID_Out, ID_Bif);
+  int point = 10;
+  nbrves     = 71;             // The number of vessels in the network.
+
+  string FileName = "topology71.txt";
+  set<int> ID_Out, ID_Bif, ID_Merge;
+  get_ID(FileName, ID_Out, ID_Bif, ID_Merge);
+
   // pressure and flow file point name:
   vector<string> nameP(nbrves, "./result/p");
   vector<string> nameQ(nbrves, "./result/q");
@@ -64,8 +66,8 @@ int main(int argc, char *argv[])
 
   clock_t c1 = clock();        // Only used when timing the program.
   tstart     = 0.0;            // Starting time.
-  finaltime  = 8*Period;       // Final end-time during a simulation.
-  tend       = 7*Period;       // Timestep before the first plot-point
+  finaltime  = 10*Period;       // Final end-time during a simulation.
+  tend       = 9*Period;       // Timestep before the first plot-point
                                // is reached.
 
   // The number of vessels in the network is given when the governing array of
@@ -76,118 +78,225 @@ int main(int argc, char *argv[])
   Tube   *Arteries[nbrves];                    // Array of blood vessels.
 
   // Geomety of arteries
-  // Left external carotid
-  Arteries[54] = new Tube(15.750,0.275,0.275,0,0,0,0,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Left internal carotid
-  Arteries[53] = new Tube(15.750,0.275,0.275,0,0,0,0,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Right external carotid
-  Arteries[52] = new Tube(15.750,0.275,0.275,0,0,0,0,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Right internal carotid
-  Arteries[51] = new Tube(15.750,0.275,0.275,0,0,0,0,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Left Posterior tibal
-  Arteries[50] = new Tube(32.000,0.125,0.125,0,0,0,0,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Left Anterior Tibal
-  Arteries[49] = new Tube(32.000,0.125,0.125,0,0,0,0,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Left Femoral B
-  Arteries[48] = new Tube(44.250,0.314,0.200,0,0,Arteries[49],Arteries[50],0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Left Deep femoral
-  Arteries[47] = new Tube(11.250,0.200,0.200,0,0,0,0,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Left Internal iliac
-  Arteries[46] = new Tube(4.500,0.200,0.200,0,0,0,0,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Left Femoral A
-  Arteries[45] = new Tube(14.500,0.370,0.314,0,0,Arteries[47],Arteries[48],0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Left External iliac
-  Arteries[44] = new Tube(5.750,0.400,0.370,0,0,Arteries[45],Arteries[46],0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Right Posterior tibal
-  Arteries[43] = new Tube(32.000,0.125,0.125,0,0,0,0,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Right Anterior Tibal
-  Arteries[42] = new Tube(32.000,0.125,0.125,0,0,0,0,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Right Femoral B
-  Arteries[41] = new Tube(44.250,0.314,0.200,0,0,Arteries[42],Arteries[43],0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Right Deep femoral
-  Arteries[40] = new Tube(11.250,0.200,0.200,0,0,0,0,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Right Internal iliac
-  Arteries[39] = new Tube(4.500,0.200,0.200,0,0,0,0,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Right Femoral A
-  Arteries[38] = new Tube(14.500,0.370,0.314,0,0,Arteries[40],Arteries[41],0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Right External iliac
-  Arteries[37] = new Tube(5.750,0.400,0.370,0,0,Arteries[38],Arteries[39],0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Abdominal aorta E
-  Arteries[36] = new Tube(8.000,0.627,0.550,0,0,Arteries[37],Arteries[44],0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Inferior mesenteric
-  Arteries[35] = new Tube(3.750,0.200,0.175,0,0,0,0,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Abdominal aorta D
-  Arteries[34] = new Tube(12.500,0.792,0.627,0,0,Arteries[35],Arteries[36],0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Left Renal
-  Arteries[33] = new Tube(3.000,0.275,0.275,0,0,0,0,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Abdominal aorta C
-  Arteries[32] = new Tube(1.500,0.814,0.792,0,0,Arteries[33],Arteries[34],0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Right Renal
-  Arteries[31] = new Tube(3.000,0.275,0.275,0,0,0,0,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Abdominal aorta B
-  Arteries[30] = new Tube(1.500,0.838,0.814,0,0,Arteries[31],Arteries[32],0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Superior mesenteric
-  Arteries[29] = new Tube(5.000,0.400,0.350,0,0,0,0,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Abdominal aorta A
-  Arteries[28] = new Tube(5.250,0.924,0.838,0,0,Arteries[29],Arteries[30],0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Splenic
-  Arteries[27] = new Tube(5.500,0.200,0.200,0,0,0,0,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Gastric
-  Arteries[26] = new Tube(5.750,0.175,0.150,0,0,0,0,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Hepatic B
-  Arteries[25] = new Tube(6.500,0.275,0.250,0,0,0,0,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Hepatic A
-  Arteries[24] = new Tube(2.000,0.300,0.250,0,0,Arteries[26],Arteries[27],0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Celiac axis
-  Arteries[23] = new Tube(2.000,0.350,0.300,0,0,Arteries[24],Arteries[25],0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Left Interosseus
-  Arteries[22] = new Tube(7.000,0.100,0.100,0,0,0,0,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Left Ulner B
-  Arteries[21] = new Tube(22.250,0.175,0.175,0,0,0,0,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Left Ulner A
-  Arteries[20] = new Tube(17.000,0.200,0.200,0,0,Arteries[21],Arteries[22],0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Right & Left Radial
-  Arteries[19] = new Tube(22.000,0.175,0.175,0,0,0,0,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Left Brachial
-  Arteries[18] = new Tube(39.750,0.407,0.250,0,0,Arteries[19],Arteries[20],0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Left Vertebral
-  Arteries[17] = new Tube(13.500,0.200,0.200,0,0,0,0,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Left Subclavian
-  Arteries[16] = new Tube(3.500,0.425,0.407,0,0,Arteries[17],Arteries[18],0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Intercostals
-  Arteries[15] = new Tube(7.250,0.630,0.500,0,0,0,0,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Thoracic aorta B
-  Arteries[14] = new Tube(10.500,1.124,0.924,0,0,Arteries[23],Arteries[28],0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Thoracic aorta A
-  Arteries[13] = new Tube(5.500,1.246,1.124,0,0,Arteries[14],Arteries[15],0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Left common Carotid
-  Arteries[12] = new Tube(19.250,0.525,0.400,0,0,Arteries[53],Arteries[54],0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Aortic arch B
-  Arteries[11] = new Tube(4.000,1.342,1.246,0,0,Arteries[13],Arteries[16],0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Right Interosseus
-  Arteries[10] = new Tube(7.000,0.100,0.100,0,0,0,0,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Right Ulner B
-  Arteries[9] = new Tube(22.250,0.175,0.175,0,0,0,0,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Right Ulner A
-  Arteries[8] = new Tube(17.000,0.200,0.200,0,0,Arteries[9],Arteries[10],0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Right Radial
-  Arteries[7] = new Tube(22.000,0.175,0.175,0,0,0,0,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Right Brachial
-  Arteries[6] = new Tube(39.750,0.407,0.250,0,0,Arteries[7],Arteries[8],0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Right Vertebral
-  Arteries[5] = new Tube(13.500,0.200,0.200,0,0,0,0,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Right common Carotid
-  Arteries[4] = new Tube(16.750,0.525,0.400,0,0,Arteries[51],Arteries[52],0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Right Subclavian
-  Arteries[3] = new Tube(3.500,0.425,0.407,0,0,Arteries[5],Arteries[6],0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Brachiocephalic
-  Arteries[2] = new Tube(3.500,0.950,0.700,0,0,Arteries[3],Arteries[4],0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // Aortic arch A
-  Arteries[1] = new Tube(3.000,1.420,1.342,0,0,Arteries[11],Arteries[12],0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
   // Ascending aorta
-  Arteries[0] = new Tube(4.000,1.525,1.420,0,0,Arteries[1],Arteries[2],0,point,1,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  Arteries[0] = new Tube(4.000,1.525,1.420,nullptr,nullptr,nullptr,nullptr,0,point,1,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Aortic arch A
+  Arteries[1] = new Tube(3.000,1.420,1.342,nullptr,nullptr,nullptr,nullptr,0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Brachiocephalic
+  Arteries[2] = new Tube(3.500,0.950,0.700,nullptr,nullptr,nullptr,nullptr,0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Right Subclavian
+  Arteries[3] = new Tube(3.500,0.425,0.407,nullptr,nullptr,nullptr,nullptr,0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Right common Carotid
+  Arteries[4] = new Tube(16.750,0.525,0.400,nullptr,nullptr,nullptr,nullptr,0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Right Vertebral
+  Arteries[5] = new Tube(14.800,0.200,0.136,nullptr,nullptr,nullptr,nullptr,0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Right Brachial
+  Arteries[6] = new Tube(39.750,0.407,0.250,nullptr,nullptr,nullptr,nullptr,0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Right Radial
+  Arteries[7] = new Tube(22.000,0.175,0.175,nullptr,nullptr,nullptr,nullptr,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Right Ulner A
+  Arteries[8] = new Tube(17.000,0.200,0.200,nullptr,nullptr,nullptr,nullptr,0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Right Ulner B
+  Arteries[9] = new Tube(22.250,0.175,0.175,nullptr,nullptr,nullptr,nullptr,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Right Interosseus
+  Arteries[10] = new Tube(7.000,0.100,0.100,nullptr,nullptr,nullptr,nullptr,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Aortic arch B
+  Arteries[11] = new Tube(4.000,1.342,1.246,nullptr,nullptr,nullptr,nullptr,0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Left common Carotid
+  Arteries[12] = new Tube(19.250,0.525,0.400,nullptr,nullptr,nullptr,nullptr,0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Thoracic aorta A
+  Arteries[13] = new Tube(5.500,1.246,1.124,nullptr,nullptr,nullptr,nullptr,0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Thoracic aorta B
+  Arteries[14] = new Tube(10.500,1.124,0.924,nullptr,nullptr,nullptr,nullptr,0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Intercostals
+  Arteries[15] = new Tube(7.250,0.630,0.500,nullptr,nullptr,nullptr,nullptr,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Left Subclavian
+  Arteries[16] = new Tube(3.500,0.425,0.407,nullptr,nullptr,nullptr,nullptr,0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Left Vertebral
+  Arteries[17] = new Tube(14.800,0.200,0.136,nullptr,nullptr,nullptr,nullptr,0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Left Brachial
+  Arteries[18] = new Tube(39.750,0.407,0.250,nullptr,nullptr,nullptr,nullptr,0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Left Radial
+  Arteries[19] = new Tube(22.000,0.175,0.175,nullptr,nullptr,nullptr,nullptr,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Left Ulner A
+  Arteries[20] = new Tube(17.000,0.200,0.200,nullptr,nullptr,nullptr,nullptr,0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Left Ulner B
+  Arteries[21] = new Tube(22.250,0.175,0.175,nullptr,nullptr,nullptr,nullptr,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Left Interosseus
+  Arteries[22] = new Tube(7.000,0.100,0.100,nullptr,nullptr,nullptr,nullptr,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Celiac axis
+  Arteries[23] = new Tube(2.000,0.350,0.300,nullptr,nullptr,nullptr,nullptr,0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Hepatic A
+  Arteries[24] = new Tube(2.000,0.300,0.250,nullptr,nullptr,nullptr,nullptr,0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Hepatic B
+  Arteries[25] = new Tube(6.500,0.275,0.250,nullptr,nullptr,nullptr,nullptr,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Gastric
+  Arteries[26] = new Tube(5.750,0.175,0.150,nullptr,nullptr,nullptr,nullptr,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Splenic
+  Arteries[27] = new Tube(5.500,0.200,0.200,nullptr,nullptr,nullptr,nullptr,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Abdominal aorta A
+  Arteries[28] = new Tube(5.250,0.924,0.838,nullptr,nullptr,nullptr,nullptr,0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Superior mesenteric
+  Arteries[29] = new Tube(5.000,0.400,0.350,nullptr,nullptr,nullptr,nullptr,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Abdominal aorta B
+  Arteries[30] = new Tube(1.500,0.838,0.814,nullptr,nullptr,nullptr,nullptr,0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Right Renal
+  Arteries[31] = new Tube(3.000,0.275,0.275,nullptr,nullptr,nullptr,nullptr,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Abdominal aorta C
+  Arteries[32] = new Tube(1.500,0.814,0.792,nullptr,nullptr,nullptr,nullptr,0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Left Renal
+  Arteries[33] = new Tube(3.000,0.275,0.275,nullptr,nullptr,nullptr,nullptr,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Abdominal aorta D
+  Arteries[34] = new Tube(12.500,0.792,0.627,nullptr,nullptr,nullptr,nullptr,0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Inferior mesenteric
+  Arteries[35] = new Tube(3.750,0.200,0.175,nullptr,nullptr,nullptr,nullptr,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Abdominal aorta E
+  Arteries[36] = new Tube(8.000,0.627,0.550,nullptr,nullptr,nullptr,nullptr,0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Right External iliac
+  Arteries[37] = new Tube(5.750,0.400,0.370,nullptr,nullptr,nullptr,nullptr,0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Right Femoral A
+  Arteries[38] = new Tube(14.500,0.370,0.314,nullptr,nullptr,nullptr,nullptr,0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Right Internal iliac
+  Arteries[39] = new Tube(4.500,0.200,0.200,nullptr,nullptr,nullptr,nullptr,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Right Deep femoral
+  Arteries[40] = new Tube(11.250,0.200,0.200,nullptr,nullptr,nullptr,nullptr,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Right Femoral B
+  Arteries[41] = new Tube(44.250,0.314,0.200,nullptr,nullptr,nullptr,nullptr,0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Right Anterior tibal
+  Arteries[42] = new Tube(32.000,0.125,0.125,nullptr,nullptr,nullptr,nullptr,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Right Posterior tibal
+  Arteries[43] = new Tube(32.000,0.125,0.125,nullptr,nullptr,nullptr,nullptr,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Left External iliac
+  Arteries[44] = new Tube(5.750,0.400,0.370,nullptr,nullptr,nullptr,nullptr,0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Left Femoral A
+  Arteries[45] = new Tube(14.500,0.370,0.314,nullptr,nullptr,nullptr,nullptr,0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Left Internal iliac
+  Arteries[46] = new Tube(4.500,0.200,0.200,nullptr,nullptr,nullptr,nullptr,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Left Deep femoral
+  Arteries[47] = new Tube(11.250,0.200,0.200,nullptr,nullptr,nullptr,nullptr,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Left Femoral B
+  Arteries[48] = new Tube(44.250,0.314,0.200,nullptr,nullptr,nullptr,nullptr,0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Left Anterior tibal
+  Arteries[49] = new Tube(32.000,0.125,0.125,nullptr,nullptr,nullptr,nullptr,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Left Posterior tibal
+  Arteries[50] = new Tube(32.000,0.125,0.125,nullptr,nullptr,nullptr,nullptr,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Right internal carotid A
+  Arteries[51] = new Tube(15.750,0.275,0.200,nullptr,nullptr,nullptr,nullptr,0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Right external carotid
+  Arteries[52] = new Tube(15.750,0.275,0.200,nullptr,nullptr,nullptr,nullptr,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Left internal carotid A
+  Arteries[53] = new Tube(15.750,0.275,0.200,nullptr,nullptr,nullptr,nullptr,0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Left external carotid
+  Arteries[54] = new Tube(15.750,0.275,0.200,nullptr,nullptr,nullptr,nullptr,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Right internal carotid B
+  Arteries[55] = new Tube(0.500,0.200,0.200,nullptr,nullptr,nullptr,nullptr,0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Left internal carotid B
+  Arteries[56] = new Tube(0.500,0.200,0.200,nullptr,nullptr,nullptr,nullptr,0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Right posterior communicating
+  Arteries[57] = new Tube(1.500,0.073,0.073,nullptr,nullptr,nullptr,nullptr,0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Left posterior communicating
+  Arteries[58] = new Tube(1.500,0.073,0.073,nullptr,nullptr,nullptr,nullptr,0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Right posterior cerebra A
+  Arteries[59] = new Tube(0.500,0.107,0.107,nullptr,nullptr,nullptr,nullptr,0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Left posterior cerebra A
+  Arteries[60] = new Tube(0.500,0.107,0.107,nullptr,nullptr,nullptr,nullptr,0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Right posterior cerebra B
+  Arteries[61] = new Tube(8.600,0.105,0.105,nullptr,nullptr,nullptr,nullptr,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Left posterior cerebra B
+  Arteries[62] = new Tube(8.600,0.105,0.105,nullptr,nullptr,nullptr,nullptr,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Basilar
+  Arteries[63] = new Tube(2.900,0.162,0.162,nullptr,nullptr,nullptr,nullptr,0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Right middle cerebral
+  Arteries[64] = new Tube(11.900,0.143,0.143,nullptr,nullptr,nullptr,nullptr,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Left middle cerebral
+  Arteries[65] = new Tube(11.900,0.143,0.143,nullptr,nullptr,nullptr,nullptr,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Right anterior cerebral A
+  Arteries[66] = new Tube(1.200,0.117,0.117,nullptr,nullptr,nullptr,nullptr,0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Left anterior cerebral A
+  Arteries[67] = new Tube(1.200,0.117,0.117,nullptr,nullptr,nullptr,nullptr,0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // anterior communicating
+  Arteries[68] = new Tube(0.300,0.074,0.074,nullptr,nullptr,nullptr,nullptr,0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Right anterior cerebral B
+  Arteries[69] = new Tube(10.300,0.120,0.120,nullptr,nullptr,nullptr,nullptr,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // Left anterior cerebral B
+  Arteries[70] = new Tube(10.300,0.120,0.120,nullptr,nullptr,nullptr,nullptr,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
 
   fprintf (stdout,"finish construction\n");
+
+
+  // Then point to the bif and merge arteries.
+
+  Arteries[0]->LD = Arteries[1]; Arteries[0]->RD = Arteries[2];
+  Arteries[1]->LD = Arteries[11]; Arteries[1]->RD = Arteries[12];
+  Arteries[2]->LD = Arteries[3]; Arteries[2]->RD = Arteries[4];
+  Arteries[3]->LD = Arteries[5]; Arteries[3]->RD = Arteries[6];
+  Arteries[4]->LD = Arteries[51]; Arteries[4]->RD = Arteries[52];
+  Arteries[6]->LD = Arteries[7]; Arteries[6]->RD = Arteries[8];
+  Arteries[8]->LD = Arteries[9]; Arteries[8]->RD = Arteries[10];
+  Arteries[11]->LD = Arteries[13]; Arteries[11]->RD = Arteries[16];
+  Arteries[12]->LD = Arteries[53]; Arteries[12]->RD = Arteries[54];
+  Arteries[13]->LD = Arteries[14]; Arteries[13]->RD = Arteries[15];
+  Arteries[14]->LD = Arteries[23]; Arteries[14]->RD = Arteries[28];
+  Arteries[16]->LD = Arteries[17]; Arteries[16]->RD = Arteries[18];
+  Arteries[18]->LD = Arteries[19]; Arteries[18]->RD = Arteries[20];
+  Arteries[20]->LD = Arteries[21]; Arteries[20]->RD = Arteries[22];
+  Arteries[23]->LD = Arteries[24]; Arteries[23]->RD = Arteries[25];
+  Arteries[24]->LD = Arteries[26]; Arteries[24]->RD = Arteries[27];
+  Arteries[28]->LD = Arteries[29]; Arteries[28]->RD = Arteries[30];
+  Arteries[30]->LD = Arteries[31]; Arteries[30]->RD = Arteries[32];
+  Arteries[32]->LD = Arteries[33]; Arteries[32]->RD = Arteries[34];
+  Arteries[34]->LD = Arteries[35]; Arteries[34]->RD = Arteries[36];
+  Arteries[36]->LD = Arteries[37]; Arteries[36]->RD = Arteries[44];
+  Arteries[37]->LD = Arteries[38]; Arteries[37]->RD = Arteries[39];
+  Arteries[38]->LD = Arteries[40]; Arteries[38]->RD = Arteries[41];
+  Arteries[41]->LD = Arteries[42]; Arteries[41]->RD = Arteries[43];
+  Arteries[44]->LD = Arteries[45]; Arteries[44]->RD = Arteries[46];
+  Arteries[45]->LD = Arteries[47]; Arteries[45]->RD = Arteries[48];
+  Arteries[48]->LD = Arteries[49]; Arteries[48]->RD = Arteries[50];
+  Arteries[55]->LD = Arteries[64]; Arteries[55]->RD = Arteries[66];
+  Arteries[55]->LP = Arteries[51]; Arteries[55]->RP = Arteries[57];
+  Arteries[56]->LD = Arteries[65]; Arteries[56]->RD = Arteries[67];
+  Arteries[56]->LP = Arteries[53]; Arteries[56]->RP = Arteries[58];
+  Arteries[59]->LD = Arteries[57]; Arteries[59]->RD = Arteries[61];
+  Arteries[60]->LD = Arteries[58]; Arteries[60]->RD = Arteries[62];
+  Arteries[63]->LD = Arteries[59]; Arteries[63]->RD = Arteries[60];
+  Arteries[63]->LP = Arteries[5]; Arteries[63]->RP = Arteries[17];
+  Arteries[67]->LD = Arteries[68]; Arteries[67]->RD = Arteries[70];
+  Arteries[69]->LP = Arteries[66]; Arteries[69]->RP = Arteries[68];
+
+
+  // Finally initiate the small structure tree.
+
+  Arteries[7]->initSmallTree();
+  Arteries[9]->initSmallTree();
+  Arteries[10]->initSmallTree();
+  Arteries[15]->initSmallTree();
+  Arteries[19]->initSmallTree();
+  Arteries[21]->initSmallTree();
+  Arteries[22]->initSmallTree();
+  Arteries[25]->initSmallTree();
+  Arteries[26]->initSmallTree();
+  Arteries[27]->initSmallTree();
+  Arteries[29]->initSmallTree();
+  Arteries[31]->initSmallTree();
+  Arteries[33]->initSmallTree();
+  Arteries[35]->initSmallTree();
+  Arteries[39]->initSmallTree();
+  Arteries[40]->initSmallTree();
+  Arteries[42]->initSmallTree();
+  Arteries[43]->initSmallTree();
+  Arteries[46]->initSmallTree();
+  Arteries[47]->initSmallTree();
+  Arteries[49]->initSmallTree();
+  Arteries[50]->initSmallTree();
+  Arteries[52]->initSmallTree();
+  Arteries[54]->initSmallTree();
+  Arteries[61]->initSmallTree();
+  Arteries[62]->initSmallTree();
+  Arteries[64]->initSmallTree();
+  Arteries[65]->initSmallTree();
+  Arteries[69]->initSmallTree();
+  Arteries[70]->initSmallTree();
 
 
   // In the next three statements the simulations are performed until
@@ -195,9 +304,9 @@ int main(int argc, char *argv[])
   // first period of time. If one needs output during this period, these three
   // lines should be commented out, and the entire simulation done within the
   // forthcomming while-loop.
-
+  fprintf (stdout,"finish bif merge and smalltree, start to solve\n");
   // Solves the equations until time equals tend.
-  solver (Arteries, tstart, tend, k);
+  solver (Arteries, tstart, tend, k, ID_Out, ID_Bif, ID_Merge);
   tstart = tend;
   tend = tend + Deltat;
 
@@ -223,7 +332,7 @@ int main(int argc, char *argv[])
 
 
     // Solves the equations until time equals tend.
-    solver (Arteries, tstart, tend, k);
+    solver (Arteries, tstart, tend, k, ID_Out, ID_Bif, ID_Merge);
     fprintf (stdout,".");
 
 

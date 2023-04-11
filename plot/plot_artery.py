@@ -64,13 +64,14 @@ def plot_qwave(number):
 
 if __name__ == "__main__":
     # this section is used to obtain all object diractories in the current dir
-    print(f"Arguments count: {len(sys.argv)}")
-    Arteries = []
-    for i, arg in enumerate(sys.argv):
-        print(f"Argument {i:>6}: {arg}")
-        if i>0:
-            Arteries.append(int(arg))
-    print(Arteries)
+ #   print(f"Arguments count: {len(sys.argv)}")
+ #   Arteries = []
+ #   for i, arg in enumerate(sys.argv):
+#        print(f"Argument {i:>6}: {arg}")
+#        if i>0:
+#            Arteries.append(int(arg))
+#    print(Arteries)
+    Arteries = [i for i in range(1,72)]
     for i in Arteries:
         plot_pwave(i)
         plot_qwave(i)

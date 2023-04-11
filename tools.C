@@ -200,7 +200,7 @@ bool zero_1d (double *x, double f, double df, double tolx)
   return (fabs(dx) < tolx && fabs(f) < tolx);
 }
 
-void get_ID(const string &FileName, set<int>& ID_Out, set<int>& ID_Bif)
+void get_ID(const string &FileName, set<int>& ID_Out, set<int>& ID_Bif, set<int> &ID_Merge)
 {
   ID_Out.clear();
   ID_Bif.clear();
@@ -218,7 +218,8 @@ void get_ID(const string &FileName, set<int>& ID_Out, set<int>& ID_Bif)
     ss >> RP;
     numOfArtery = numOfArtery-1;
     if (LD!=RD) ID_Bif.insert(numOfArtery);
-    else if (LD==0 && RD==0) ID_Out.insert(numOfArtery);
+    else if ((LD==0 && RD==0)&&(LP==0 && RP==0)) ID_Out.insert(numOfArtery);
+    if ( (LP!=0 && RP!=0) && (LP!=RP) ) ID_Merge.insert(numOfArtery);
   }
   VascularTopoloy.close();
 }

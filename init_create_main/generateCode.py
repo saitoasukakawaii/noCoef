@@ -12,19 +12,34 @@ def openfile(i: int, string: str) -> str:
         i + 1, string)
 
 
+def allocateArteryPoint(i:int,TL:int, TR:int,PL:int, PR:int) -> str:
+    strings = ''
+    if TL != TR:
+        strings = strings+'  Arteries[{0}]->LD = Arteries[{1}]; Arteries[{0}]->RD = Arteries[{2}];\n'.format(i,TL-1,TR-1)
+    if (PL!=0 and PR!=0) and (PL!=PR):
+        strings = strings+'  Arteries[{0}]->LP = Arteries[{1}]; Arteries[{0}]->RP = Arteries[{2}];\n'.format(i,PL-1,PR-1)
+        
+    return strings
+
+def initSmallTree(i:int,TL:int,TR:int) -> str:
+    if TL == 0 and TR == 0:
+        return '  Arteries[{0}]->initSmallTree();\n'.format(i)
+    else:
+        return ''
+
 def constructure_artery(i:int, L:float, rt:float, rb:float, TL:int, TR:int) -> str:
     if TL == 0 and TR == 0:
-        block_l = "0"
-        block_r = "0"
+        # block_l = "0"
+        # block_r = "0"
         rm = "rm4"
     else:
-        block_l = "Arteries[{}]".format(TL-1)
-        block_r = "Arteries[{}]".format(TR-1)
+        # block_l = "Arteries[{}]".format(TL-1)
+        # block_r = "Arteries[{}]".format(TR-1)
         rm = "0"
     if i == 0:
-        return '  Arteries[{0}] = new Tube({1:.3f},{2:.3f},{3:.3f},0,0,{4},{5},{6},point,1,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);\n'.format(i,L,rt,rb,block_l,block_r,rm)
+        return '  Arteries[{0}] = new Tube({1:.3f},{2:.3f},{3:.3f},nullptr,nullptr,nullptr,nullptr,{4},point,1,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);\n'.format(i,L,rt,rb,rm)
     else:
-        return '  Arteries[{0}] = new Tube({1:.3f},{2:.3f},{3:.3f},0,0,{4},{5},{6},point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);\n'.format(i,L,rt,rb,block_l,block_r,rm)
+        return '  Arteries[{0}] = new Tube({1:.3f},{2:.3f},{3:.3f},nullptr,nullptr,nullptr,nullptr,{4},point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);\n'.format(i,L,rt,rb,rm)
 
 def output(i: int, string: str) -> str:
     return "    Arteries[{2}]->print{3}xt(f{1}{0}, tend, 0);\n".format(
@@ -36,17 +51,18 @@ def closefile(i: int, string: str) -> str:
            'OK");\n'.format(i + 1, string)
 
 
-filename = "../Geometry/jcj55.xlsx"
+filename = "../Geometry/jcj71.xlsx"
 # read the geometry data
 df1 = pd.read_excel(filename, sheet_name="Sheet1")
 # read the topology
 df2 = pd.read_excel(filename, sheet_name="Sheet2")
 
 n: int = len(df1)        	# 血管数量
-n_period: int = 7  		# 从第几个周期开始画图
-point: int = 8     		# 每1cm划分点个数，初始为8192划分4，16384试试8
+topology_name = "../topology"+str(n)+".txt"
+n_period: int = 9  		# 从第几个周期开始画图
+point: int = 10     		# 每1cm划分点个数，初始为8192划分4，16384试试8
 wave_flag: bool = True 	# Whether implement wave analysis
-
+df2.to_csv(topology_name, sep='\t',header=False,index=False)
 with open("generateCode.txt", "w") as f:
     f.write('#include "sor07_new.h"\n')
     f.write('#include "tools.h"\n')
@@ -58,6 +74,11 @@ with open("generateCode.txt", "w") as f:
             "small vessel is 0.01~0.04\n  double rm4 = 0.03;\n")
     f.write('  int point = {};\n'.format(point))
     f.write("  nbrves     = {};             // The number of vessels in the network.\n\n".format(n))
+
+    f.write('  string FileName = "{}";\n'.format(topology_name))
+    f.write("  set<int> ID_Out, ID_Bif, ID_Merge;\n")
+    f.write("  get_ID(FileName, ID_Out, ID_Bif, ID_Merge);\n\n")
+
     f.write("  // pressure and flow file point name:\n")
     f.write('  vector<string> nameP(nbrves, "./result/p");\n')
     f.write('  vector<string> nameQ(nbrves, "./result/q");\n')
@@ -82,17 +103,25 @@ with open("generateCode.txt", "w") as f:
             'declared.\n\n  impedance_init_driver_(&tmstps);\n\n  Tube   *Arteries[nbrves];                    // '
             'Array of blood vessels.\n\n  // Geomety of arteries\n')
 
-    for i in range(n-1, -1, -1):
+    for i in range(n):
         f.write('  // '+df1['Artery'][i]+'\n')
         f.write(constructure_artery(i,df1['L(cm)'][i],df1['r0(cm)'][i],df1['r1(cm)'][i],df2['l'][i],df2['r'][i]))
 
     f.write('\n  fprintf (stdout,"finish construction\\n");\n\n\n')
+    f.write('  // Then point to the bif and merge arteries.\n\n')
+    for i in range(n):
+        f.write(allocateArteryPoint(i,df2['l'][i],df2['r'][i],df2['pl'][i],df2['pr'][i]))
+    f.write('\n\n')
+    f.write('  // Finally initiate the small structure tree.\n\n')
+    for i in range(n):
+        f.write(initSmallTree(i,df2['l'][i],df2['r'][i]))
+    f.write('\n\n')
     f.write('  // In the next three statements the simulations are performed until\n  // tstart = tend. That is this is without making any output during this\n  // first period of time. If one needs output during this period, these three\n  // lines should be commented out, and the entire simulation done within the\n  // forthcomming while-loop.')
-    f.write('\n\n  // Solves the equations until time equals tend.\n  solver (Arteries, tstart, tend, k, ID_Out, ID_Bif);\n  tstart = tend;\n  tend = tend + Deltat;\n\n')
+    f.write('\n\n  // Solves the equations until time equals tend.\n  solver (Arteries, tstart, tend, k, ID_Out, ID_Bif, ID_Merge);\n  tstart = tend;\n  tend = tend + Deltat;\n\n')
     f.write('\n  fprintf (stdout,"plots start\\n");\n\n')
     f.write('\n  // The loop is continued until the final time\n  // is reached. If one wants to make a plot of\n  // the solution versus x, tend is set to final-\n  // time in the above declaration.\n')
     f.write('  while (tend <= finaltime)\n  {\n    for (int j=0; j<nbrves; j++)\n    {\n      int ArtjN = Arteries[j]->N;     // The number of grid points along the vessel\n      for (int i=0; i<ArtjN; i++)\n      {\n        Arteries[j]->Qprv[i+1] = Arteries[j]->Qnew[i+1];\n        Arteries[j]->Aprv[i+1] = Arteries[j]->Anew[i+1];\n      }\n    }\n\n\n')
-    f.write('    // Solves the equations until time equals tend.\n    solver (Arteries, tstart, tend, k, ID_Out, ID_Bif);\n    fprintf (stdout,".");\n\n\n')
+    f.write('    // Solves the equations until time equals tend.\n    solver (Arteries, tstart, tend, k, ID_Out, ID_Bif, ID_Merge);\n    fprintf (stdout,".");\n\n\n')
 
     f.write("\n\n    // call output member function:\n")
     f.write("    for(int i=0;i<nbrves;++i)\n    {\n      Arteries[i]->printPxt(fp[i], tend, 0);\n      Arteries[i]->printQxt(fq[i], tend, 0);\n    }\n")
