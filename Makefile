@@ -76,7 +76,7 @@ clean:
 
 .PHONY: veryclean
 veryclean: clean
-	-rm $(MAIN) a.out *~ ./result/q* ./result/p* ./result/U* ./result/A* ./result/C*
+	-rm $(MAIN) a.out *~ ./result/q* ./result/p* ./result/U* ./result/A* ./result/C* Zhat*
 	
 .PHONY: run
 run: ${MAIN}
