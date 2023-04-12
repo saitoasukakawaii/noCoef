@@ -23,7 +23,7 @@
 extern double   conv, rho, mu, mu_pl, nu, Lr, Lr2, Lr3, g, q, Fr2,
                 Re, p0, pmean, tmst, Period, Fcst, alpha, CO, COm,
                 Deltat, tau, m1, m2, m3, m4,  
-	              *fjac[18], xr, f, df;
+	              *fjac[18], *fjac12[12], xr, f, df;
 
 // The class structure.
 class Tube {
@@ -170,7 +170,7 @@ public:
   // only be called when such exist.
   void bound_bif_right (double theta, double gamma);
   void bound_bif_left (double theta, double gamma);
-
+  void ConnectEndToEnd (double theta, double gamma);
   // In order to ensure a more efficient execution of the program the following
   // functions is made as in-line functions.
 

@@ -406,8 +406,8 @@ double Tube :: P (int i, double A)
 {
   // double theta = M_PI/2*(A/A0[i]-1);
   // double pnew = p1[i]*tan(theta);
-  double pold = fr[i]*(1-sqrt(A0[i]/A));
-
+  // double pold = fr[i]*(1-sqrt(A0[i]/A));
+  double pold = fr[i]*(sqrt(A/A0[i])-1.0);
   return pold;
 }
 
@@ -415,8 +415,8 @@ double Tube :: dPdA (int i, double A)
 {
   // double theta = M_PI/2*(A/A0[i]-1);
   // double pnew  = 0.5*p1[i]/sq(r0[i]*cos(theta));
-  double pold = 0.5*fr[i]*sqrt(A0[i]/cu(A));
-
+  // double pold = 0.5*fr[i]*sqrt(A0[i]/cu(A));
+  double pold = 0.5*fr[i]/sqrt(A0[i]*A);
   return pold;
 }
 
@@ -425,7 +425,8 @@ double Tube :: dPdx1(int i, double A)
   // double theta = M_PI/2*(A/A0[i]-1);
   // double pnew  = dr0dx[i]*(dp1dr0[i]*tan(theta) -
   //                p1[i]*A/(sq(r0[i]*cos(theta))*r0[i]));
-  double pold = (dfrdr0[i]*(1-sqrt(A0[i]/A))-fr[i]*sqrt(M_PI/A))*dr0dx[i];
+  // double pold = (dfrdr0[i]*(1-sqrt(A0[i]/A))-fr[i]*sqrt(M_PI/A))*dr0dx[i];
+  double pold = (dfrdr0[i]*(sqrt(A/A0[i])-1)-fr[i]*sqrt(M_PI*A)/A0[i])*dr0dx[i];
 
   return pold;
 }
@@ -436,7 +437,8 @@ double Tube :: B (int i, double A)
   // double p1i   = p1[i];
   // double pnew  = p1i/Fr2*(A*tan(theta) +
   //                sq(r0[i])*log(sq(cos(theta))));
-  double pold = fr[i]*(sqrt(A0[i]*A)-A0[i])/Fr2;
+  // double pold = fr[i]*(sqrt(A0[i]*A)-A0[i])/Fr2;
+  double pold = fr[i]*(sqrt(cu(A)/A0[i])-A0[i])/Fr2/3.0;
 
   return pold;
 }
@@ -447,7 +449,8 @@ double Tube :: Bh (int i, double A)
    // double theta = M_PI/2*(A/A0h[ip1]-1);
    // double p1i   = p1h[ip1];
    // double pnew  = p1i/Fr2*(A*tan(theta) + sq(r0h[ip1])*log(sq(cos(theta))));
-   double pold = frh[ip1]*(sqrt(A0h[ip1]*A)-A0h[ip1])/Fr2;
+   //  double pold = frh[ip1]*(sqrt(A0h[ip1]*A)-A0h[ip1])/Fr2;
+   double pold = frh[ip1]*(sqrt(cu(A)/A0h[ip1])-A0h[ip1])/Fr2/3.0;
 
    return pold;
 }
@@ -462,9 +465,12 @@ double Tube :: dBdx1 (int i, double A)
   //double lcost   = log(sq(cos(theta)));
 
   double dfr = dfrdr0[i];
-  double pold = dr0dx[i]/Fr2*(
-         sqrt(A)*(2*sqrt(M_PI)*fr[i]+2*sqrt(A0[i])*dfr)-
-         A*dfr-2*M_PI*r0[i]*fr[i]-A0[i]*dfr);
+  // double pold = dr0dx[i]/Fr2*(
+  //        sqrt(A)*(2*sqrt(M_PI)*fr[i]+2*sqrt(A0[i])*dfr)-
+  //        A*dfr-2*M_PI*r0[i]*fr[i]-A0[i]*dfr);
+  double inteval = 2.0*M_PI*r0[i]*fr[i]+A0[i]*dfr;
+    
+  double pold = dr0dx[i]*(2.0*sqrt(cu(A))*(sqrt(M_PI)*fr[i]-sqrt(A0[i])*dfr)/A0[i]/3.0 + A*dfr - inteval/3.0)/Fr2;
   // double pnew = dr0dx[i]/Fr2*(A0[i]*dp1dr0i*lcost/M_PI +
   //	 2*p1i*r0[i]*(Atant*M_PI/A0[i] + lcost));
 
@@ -483,10 +489,12 @@ double Tube :: dBdx1h (int i, double A)
 
   double dfr = dfrdr0h[ip1];
 
-  double pold = dr0dxh[ip1]/Fr2*(
-         sqrt(A)*(2*sqrt(M_PI)*frh[ip1]+2*sqrt(A0h[ip1])*dfr)-
-         A*dfr-2*M_PI*r0h[ip1]*frh[ip1]-A0h[ip1]*dfr);
-
+  // double pold = dr0dxh[ip1]/Fr2*(
+  //        sqrt(A)*(2*sqrt(M_PI)*frh[ip1]+2*sqrt(A0h[ip1])*dfr)-
+  //        A*dfr-2*M_PI*r0h[ip1]*frh[ip1]-A0h[ip1]*dfr);
+  double inteval = 2.0*M_PI*r0h[ip1]*frh[ip1]+A0h[ip1]*dfr;
+    
+  double pold = dr0dxh[ip1]*(2.0*sqrt(cu(A))*(sqrt(M_PI)*frh[ip1]-sqrt(A0h[ip1])*dfr)/A0h[ip1]/3.0 + A*dfr - inteval/3.0)/Fr2;
   // double pnew = dr0dxh[ip1]/Fr2*(A0h[ip1]*dp1dr0i*lcost/M_PI +
   //	 2*p1i*r0h[ip1]*(Atant*M_PI/A0h[ip1] + lcost));
 
@@ -498,7 +506,8 @@ double Tube :: dBdAh (int i, double A)
   int ip1      = i+1;
   // double theta = M_PI/2*(A/A0h[ip1]-1);
   // double pnew = 0.5*p1h[ip1]*A/(Fr2*sq(r0h[ip1]*cos(theta)));
-  double pold = 0.5*frh[ip1]*sqrt(A0h[ip1]/A)/Fr2;
+  // double pold = 0.5*frh[ip1]*sqrt(A0h[ip1]/A)/Fr2;
+  double pold = 0.5*frh[ip1]*sqrt(A/A0h[ip1])/Fr2;
 
   return pold;
 }
@@ -514,9 +523,10 @@ double Tube :: d2BdAdxh (int i, double A)
    // double pnew = dr0dxh[ip1]/Fr2*(
    //     p1i*A/(2*sq(A0h[ip1]*cos(theta))) -
    //	  dp1dr0h[ip1]*tan(theta));
-   double pold = (-dfr+1/sqrt(A)*(sqrt(M_PI)*frh[ip1]+
-          sqrt(A0h[ip1])*dfr))*dr0dxh[ip1]/Fr2;
+  //  double pold = (-dfr+1/sqrt(A)*(sqrt(M_PI)*frh[ip1]+
+  //         sqrt(A0h[ip1])*dfr))*dr0dxh[ip1]/Fr2;
 
+   double pold = (dfr+sqrt(A)*(sqrt(M_PI)*frh[ip1] - sqrt(A0h[ip1])*dfr)/A0h[ip1])*dr0dxh[ip1]/Fr2;
    return pold;
 }
 
@@ -1309,6 +1319,120 @@ void Tube :: bound_bif_right (double theta, double gamma)
   if (j >=ntrial) error ("arteries.C","Root not found in the bifurcation");
 }
 
+void Tube :: ConnectEndToEnd (double theta, double gamma)
+{
+  int j = 1;
+  int ok = false;
+  const int ntrial = 40;
+  int LDN = LD->N;
+
+  double g1   = Qold[N]       + theta*R2h[N-1]         + gamma*S2h[N-1];
+  double g2   = LD->Qold[LDN] + theta*(LD->R2h[LDN-1]) + gamma*(LD->S2h[LDN-1]);
+
+  double k1   = Aold[N]       + theta*R1h[N-1];
+  double k2   = LD->Aold[LDN] + theta*(LD->R1h[LDN-1]);
+
+  double k3   = Qh[N-1]/2;
+  double k4   = LD->Qh[LDN-1]/2;
+
+  double k5   = Ah[N-1]/2;
+  double k6   = LD->Ah[LDN-1]/2;
+
+  double xb[12];
+
+  // The approximative initial guesses are applied.
+  xb[ 0] =  Qh[N-1];                            //Initial guess for Q1_xb n+1
+  xb[ 1] = (Qold[N-1] + Qold[N])/2;             //Initial guess for Q1_xb^n+0.5
+  xb[ 2] =  Qold[N];                            //Initial guess for Q1_xb+0.5 n+0.5
+  xb[ 3] =  LD->Qh[LDN-1];                      //Initial guess for Q2_xb n+1
+  xb[ 4] = (LD->Qold[LDN] + LD->Qold[LDN-1])/2; //Initial guess for Q2_xb n+0.5
+  xb[ 5] =  LD->Qold[LDN];                      //Initial guess for Q2_xb+0.5 n+0.5
+  xb[ 6] =  Ah[N-1];                            //Initial guess for A1_xb n+1
+  xb[ 7] = (Aold[N-1] + Aold[N])/2;             //Initial guess for A1_xb^n+0.5
+  xb[ 8] =  Aold[N];                            //Initial guess for A1_xb+0.5 n+0.5
+  xb[ 9] =  LD->Ah[LDN-1];                      //Initial guess for A2_xb n+1
+  xb[10] = (LD->Aold[LDN] + LD->Aold[LDN-1])/2; //Initial guess for A2_xb n+0.5
+  xb[11] =  LD->Aold[LDN];                      //Initial guess for A2_xb+0.5 n+0.5
+
+
+  // The residuals (fvec), and the Jacobian is determined, and if possible
+  // the system of equations is solved.
+  while (j <= ntrial && ok==false) // Find the zero
+  {
+    double fvec[12];
+    // The residuals.
+    fvec[0]  = g1  - xb[0] -
+                theta*(sq(xb[2])/xb[8] + Bh(N,xb[8])) +
+	              gamma*(F(xb[2],xb[8])  + dBdx1h(N,xb[8]));
+    fvec[1]  = g2  - xb[3] -
+	              theta*(sq(xb[5])/xb[11] + LD->Bh(LDN,xb[11])) +
+	              gamma*(F(xb[5],xb[11])  + LD->dBdx1h(LDN,xb[11]));
+    fvec[2]  = - theta*xb[2] - xb[6]  + k1;
+    fvec[3]  = - theta*xb[5] - xb[9]  + k2;
+    fvec[4]  = - xb[ 1] + xb[ 2]/2 + k3;
+    fvec[5]  = - xb[ 4] + xb[ 5]/2 + k4;
+    fvec[6]  = - xb[ 7] + xb[ 8]/2 + k5;
+    fvec[7]  = - xb[10] + xb[11]/2 + k6;
+    fvec[8]  = - xb[ 1] + xb[ 4];
+    fvec[9]  = - xb[ 0] + xb[ 3];
+    fvec[10] = - P(N,xb[7]) + LD->P(LDN,xb[10]);
+    fvec[11] = - P(N,xb[6]) + LD->P(LDN,xb[ 9]);
+
+    for (int row = 0; row < 12; row++)
+      for (int col = 0; col < 12; col++)
+        fjac12[row][col] = 0.0;
+
+    // The Jacobian.
+    // flow equation
+    fjac12[ 0][ 0] = -1.0;
+    fjac12[ 0][ 2] = -2*theta*xb[2]/xb[8] + gamma*dFdQ(xb[8]);
+    fjac12[ 0][ 8] = theta*( sq(xb[2]/xb[ 8]) - dBdAh(N,xb[8])) +
+                   gamma*(dFdA(xb[2],xb[8]) + d2BdAdxh(N,xb[8]));
+    fjac12[ 1][ 3] = -1.0;
+    fjac12[ 1][ 5] = -2*theta*xb[5]/xb[11] + gamma*dFdQ(xb[11]);
+    fjac12[ 1][11] = theta*( sq(xb[5]/xb[11]) - LD->dBdAh(LDN,xb[11])) +
+                   gamma*(dFdA(xb[5],xb[11]) + LD->d2BdAdxh(LDN,xb[11]));
+    // area equation
+    fjac12[ 2][ 2] = -theta;
+    fjac12[ 2][ 6] = -1.0;
+    fjac12[ 3][ 5] = -theta;
+    fjac12[ 3][ 9] = -1.0;
+    // ghost point
+    fjac12[ 4][ 1] = -1.0;
+    fjac12[ 4][ 2] =  0.5;
+    fjac12[ 5][ 4] = -1.0;
+    fjac12[ 5][ 5] =  0.5;
+    fjac12[ 6][ 7] = -1.0;
+    fjac12[ 6][ 8] =  0.5;
+    fjac12[ 7][10] = -1.0;
+    fjac12[ 7][11] =  0.5;
+    // cotinuous equation
+    fjac12[ 8][ 1] = -1.0;
+    fjac12[ 8][ 4] =  1.0;
+    fjac12[ 9][ 0] = -1.0;
+    fjac12[ 9][ 3] =  1.0;
+    // jacobian of pressure function
+    fjac12[10][ 7] = - dPdA(N,xb[7]);
+    fjac12[10][10] = LD->dPdA(LDN,xb[10]);
+    fjac12[11][ 8] = - dPdA(N,xb[8]);
+    fjac12[11][11] = LD->dPdA(LDN,xb[11]);
+    // Check whether solution is close enough. If not run the loop again.
+    // int ch = zero (xb, 18, 1.0e-4, 1.0e-4, fvec, fjac12);
+    int ch = zero (xb, 12, 1.0e-12, 1.0e-12, fvec, fjac12);
+    if (ch == 1) ok = true;
+
+    j = j+1;
+  }
+
+  // Solutions is applied, and right boundary is updated.
+  Anew[N]       = xb[6];
+  Qnew[N]       = xb[0];
+  LD->Anew[LDN] = xb[9];
+  LD->Qnew[LDN] = xb[6];
+
+  if (j >=ntrial) error ("arteries.C","Root not found in the end to end connection");
+}
+
 
 
 // Solves the non-linear PDE's (momentum and continuity eqn's.
@@ -1373,6 +1497,11 @@ void solver (Tube *Arteries[], double tstart, double tend, double k,
     for (auto i: ID_Out){
       Arteries[i] -> bound_right (qLnb, k, k/Arteries[i]->h, t);
     }
+    double theta = k/Arteries[68]->h;
+	  double gamma = k/2;
+    fprintf(stdout, "start endtoend.\n");
+    Arteries[68] -> ConnectEndToEnd(theta, gamma);
+    fprintf(stdout, "end endtoend.\n");
     // Update the time and position within one period.
     t = t + k;
     qLnb = (qLnb + 1) % tmstps;

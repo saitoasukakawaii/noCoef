@@ -51,14 +51,14 @@ def closefile(i: int, string: str) -> str:
            'OK");\n'.format(i + 1, string)
 
 
-filename = "../Geometry/jcj71.xlsx"
+filename = "../Geometry/jcj72.xlsx"
 # read the geometry data
 df1 = pd.read_excel(filename, sheet_name="Sheet1")
 # read the topology
 df2 = pd.read_excel(filename, sheet_name="Sheet2")
 
 n: int = len(df1)        	# 血管数量
-topology_name = "../topology"+str(n)+".txt"
+topology_name = "topology"+str(n)+".txt"
 n_period: int = 9  		# 从第几个周期开始画图
 point: int = 10     		# 每1cm划分点个数，初始为8192划分4，16384试试8
 wave_flag: bool = True 	# Whether implement wave analysis
@@ -97,7 +97,7 @@ with open("generateCode.txt", "w") as f:
         f.write(openfile(0, "A"))
         f.write(openfile(0, "C"))
 
-    f.write('\n  // Workspace used by bound_bif\n  for(int i=0; i<18; i++) fjac[i] = new double[18];\n\n')
+    f.write('\n  // Workspace used by bound_bif\n  for(int i=0; i<18; i++) fjac[i] = new double[18];\n  for(int i=0; i<12; i++) fjac12[i] = new double[12];\n\n')
     f.write('  clock_t c1 = clock();        // Only used when timing the program.\n  tstart     = 0.0;            // Starting time.\n  finaltime  = {0}*Period;       // Final end-time during a simulation.\n  tend       = {1}*Period;       // Timestep before the first plot-point\n                               // is reached.\n\n'.format(n_period + 1, n_period))
     f.write('  // The number of vessels in the network is given when the governing array of\n  // vessels is '
             'declared.\n\n  impedance_init_driver_(&tmstps);\n\n  Tube   *Arteries[nbrves];                    // '
@@ -131,7 +131,7 @@ with open("generateCode.txt", "w") as f:
 
 
     f.write('\n\n    // The time within each print is increased.\n    tstart = tend;\n    tend   = tend + Deltat; // The current ending time is increased by Deltat.\n  }\n  fprintf(stdout,"\\n");\n\n\n')
-    f.write('  // The following statements is used when timing the simulation.\n  fprintf(stdout,"nbrves = %d, Lax, ", nbrves);\n  clock_t c2 = clock(); // FIXME clock() may wrap after about 72 min.\n  int tsec = (int) ((double) (c2-c1)/CLOCKS_PER_SEC + 0.5);\n  fprintf(stdout,"cpu-time %d:%02d\\n", tsec / 60, tsec % 60);\n  fprintf(stdout,"\\n");\n\n  // In order to termate the program correctly the vessel network and hence\n  // all the vessels and their workspace are deleted.\n  for (int i=0; i<nbrves; i++) delete Arteries[i];\n\n  // Matrices and arrays are deleted\n  for (int i=0; i<18; i++) delete[] fjac[i];\n\n')
+    f.write('  // The following statements is used when timing the simulation.\n  fprintf(stdout,"nbrves = %d, Lax, ", nbrves);\n  clock_t c2 = clock(); // FIXME clock() may wrap after about 72 min.\n  int tsec = (int) ((double) (c2-c1)/CLOCKS_PER_SEC + 0.5);\n  fprintf(stdout,"cpu-time %d:%02d\\n", tsec / 60, tsec % 60);\n  fprintf(stdout,"\\n");\n\n  // In order to termate the program correctly the vessel network and hence\n  // all the vessels and their workspace are deleted.\n  for (int i=0; i<nbrves; i++) delete Arteries[i];\n\n  // Matrices and arrays are deleted\n  for (int i=0; i<18; i++) delete[] fjac[i];\n  for (int i=0; i<12; i++) delete[] fjac12[i];\n\n')
 
     f.write("\n\n  // close the files:\n")
     f.write('  for(int i=0;i<nbrves;++i)\n  {\n    auto j=i+1;\n    string SuccessInfo1 = "Close "+to_string(j)+"p OK \\n";\n    string FailInfo1 = "Close "+to_string(j)+"p NOT OK \\n";\n    if (fclose(fp[i]) != EOF) fprintf(stdout, "%s", (SuccessInfo1).c_str()); else error("main.C", (FailInfo1).c_str());\n    string SuccessInfo2 = "Close "+to_string(j)+"q OK \\n";\n    string FailInfo2 = "Close "+to_string(j)+"q NOT OK \\n";\n    if (fclose(fq[i]) != EOF) fprintf(stdout, "%s", (SuccessInfo2).c_str()); else error("main.C", (FailInfo2).c_str());\n  }\n')

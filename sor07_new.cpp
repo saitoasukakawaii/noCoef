@@ -22,9 +22,9 @@ int main(int argc, char *argv[])
   // normal range of rmin of small vessel is 0.01~0.04
   double rm4 = 0.03;
   int point = 10;
-  nbrves     = 71;             // The number of vessels in the network.
+  nbrves     = 72;             // The number of vessels in the network.
 
-  string FileName = "topology71.txt";
+  string FileName = "topology72.txt";
   set<int> ID_Out, ID_Bif, ID_Merge;
   get_ID(FileName, ID_Out, ID_Bif, ID_Merge);
 
@@ -63,6 +63,7 @@ int main(int argc, char *argv[])
 
   // Workspace used by bound_bif
   for(int i=0; i<18; i++) fjac[i] = new double[18];
+  for(int i=0; i<12; i++) fjac12[i] = new double[12];
 
   clock_t c1 = clock();        // Only used when timing the program.
   tstart     = 0.0;            // Starting time.
@@ -214,12 +215,14 @@ int main(int argc, char *argv[])
   Arteries[66] = new Tube(1.200,0.117,0.117,nullptr,nullptr,nullptr,nullptr,0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
   // Left anterior cerebral A
   Arteries[67] = new Tube(1.200,0.117,0.117,nullptr,nullptr,nullptr,nullptr,0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
-  // anterior communicating
-  Arteries[68] = new Tube(0.300,0.074,0.074,nullptr,nullptr,nullptr,nullptr,0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // anterior communicating A
+  Arteries[68] = new Tube(0.150,0.074,0.074,nullptr,nullptr,nullptr,nullptr,0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
   // Right anterior cerebral B
   Arteries[69] = new Tube(10.300,0.120,0.120,nullptr,nullptr,nullptr,nullptr,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
   // Left anterior cerebral B
   Arteries[70] = new Tube(10.300,0.120,0.120,nullptr,nullptr,nullptr,nullptr,rm4,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
+  // anterior communicating B
+  Arteries[71] = new Tube(0.150,0.074,0.074,nullptr,nullptr,nullptr,nullptr,0,point,0,0,0,0,0,ff1,ff2,ff3,fa1,fa2,fa3, 0.0);
 
   fprintf (stdout,"finish construction\n");
 
@@ -261,9 +264,9 @@ int main(int argc, char *argv[])
   Arteries[60]->LD = Arteries[58]; Arteries[60]->RD = Arteries[62];
   Arteries[63]->LD = Arteries[59]; Arteries[63]->RD = Arteries[60];
   Arteries[63]->LP = Arteries[5]; Arteries[63]->RP = Arteries[17];
+  Arteries[66]->LD = Arteries[69]; Arteries[66]->RD = Arteries[71];
   Arteries[67]->LD = Arteries[68]; Arteries[67]->RD = Arteries[70];
-  Arteries[69]->LP = Arteries[66]; Arteries[69]->RP = Arteries[68];
-
+  Arteries[68]->LD = Arteries[71]; Arteries[68]->RD = Arteries[71];
 
   // Finally initiate the small structure tree.
 
@@ -304,7 +307,7 @@ int main(int argc, char *argv[])
   // first period of time. If one needs output during this period, these three
   // lines should be commented out, and the entire simulation done within the
   // forthcomming while-loop.
-  fprintf (stdout,"finish bif merge and smalltree, start to solve\n");
+
   // Solves the equations until time equals tend.
   solver (Arteries, tstart, tend, k, ID_Out, ID_Bif, ID_Merge);
   tstart = tend;
@@ -368,6 +371,7 @@ int main(int argc, char *argv[])
 
   // Matrices and arrays are deleted
   for (int i=0; i<18; i++) delete[] fjac[i];
+  for (int i=0; i<12; i++) delete[] fjac12[i];
 
 
 
