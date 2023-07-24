@@ -218,7 +218,7 @@ void get_ID(const string &FileName, set<int>& ID_Out, set<int>& ID_Bif, set<int>
     ss >> RP;
     numOfArtery = numOfArtery-1;
     if (LD!=RD) ID_Bif.insert(numOfArtery);
-    else if ((LD==0 && RD==0)&&(LP==0 && RP==0)) ID_Out.insert(numOfArtery);
+    else if ((LD==0 && RD==0)) ID_Out.insert(numOfArtery);
     if ( (LP!=0 && RP!=0) && (LP!=RP) ) ID_Merge.insert(numOfArtery);
   }
   VascularTopoloy.close();

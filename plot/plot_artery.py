@@ -28,13 +28,14 @@ def plot_pwave(number):
     ax = fig.add_subplot()
     ax.set_title("Pressure")
     for i in range(N):
-        ax.plot(time, ZP[:, ind[i]], color=Color[i], linewidth=5)
+        ax.plot(time, ZP[:, ind[i]], color=Color[i], linewidth=3)
     ax.set_xlabel("Time (s)")
     ax.set_ylabel("Pressure (mmHg)")
     ax.grid(which='both', linestyle='--')
-    plt.savefig("./Pressure"+str(number)+".tif",
-                dpi=120,
-                pad_inches=0.0)
+    plt.savefig("./Pressure"+str(number)+".svg",
+                # dpi=120,
+                pad_inches=0.0,
+                transparent=True)
     plt.close()
 
 
@@ -53,13 +54,14 @@ def plot_qwave(number):
     ax = fig.add_subplot()
     ax.set_title("Flow")
     for i in range(N):
-        ax.plot(time, ZQ[:, ind[i]], color=Color[i], linewidth=5)
+        ax.plot(time, ZQ[:, ind[i]], color=Color[i], linewidth=3)
     ax.set_xlabel("Time (s)")
     ax.set_ylabel("Flow (ml/s)")
     ax.grid(which='both', linestyle='--')
-    plt.savefig("./Flow"+str(number)+".tif",
-                dpi=120,
-                pad_inches=0.0)
+    plt.savefig("./Flow"+str(number)+".svg",
+                # dpi=120,
+                pad_inches=0.0,
+                transparent=True)
     plt.close()
 
 if __name__ == "__main__":

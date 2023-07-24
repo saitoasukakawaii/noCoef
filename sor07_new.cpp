@@ -27,7 +27,10 @@ int main(int argc, char *argv[])
   string FileName = "topology71.txt";
   set<int> ID_Out, ID_Bif, ID_Merge;
   get_ID(FileName, ID_Out, ID_Bif, ID_Merge);
-
+  fprintf(stdout, "The id of out flow condition:\n");
+  for(auto i: ID_Out){
+    fprintf(stdout, "%d\t", i);
+  }
   // pressure and flow file point name:
   vector<string> nameP(nbrves, "./result/p");
   vector<string> nameQ(nbrves, "./result/q");

@@ -71,8 +71,8 @@ double conv   = 1332.20,              // Conversion from mmHg to SI-units.
        tau    = 0.08*q/Lr3,           // End of pulse, dimension-less.
        k      = Period/tmstps,        // Length of a timestep.
        Deltat = Period/plts,          // Interval between each point plottet.
-       p0     = 55.0/rho/g/Lr*conv,   // Ensures a certain diastolic pressure.
-       //  p0     = 75./rho/g/Lr*conv,   // Ensures a certain diastolic pressure.
+      //  p0     = 55.0/rho/g/Lr*conv,   // Ensures a certain diastolic pressure.
+       p0     = 75./rho/g/Lr*conv,   // Ensures a certain diastolic pressure.
 
        *fjac[18],                     // Work space used by bound_bif.
        xr, f, df;                     // Work space used by bound_right.
