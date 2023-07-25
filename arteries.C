@@ -45,6 +45,7 @@ extern char* CO_filename;
 // arteries.
 
 extern "C" void impedance_driver_(int *tmstps, double *Period,
+                                  double *alpha_value, double *beta_value,
 				                          double *ff1, double *ff2, double *ff3,
 				                          double *rho, double *mu, 
                                   double *r_root, double *rmin,
@@ -62,13 +63,14 @@ extern "C" void impedance_driver_(int *tmstps, double *Period,
 // the daughter vessels must be given.
 // Further all the work arrays are declared and initialized, and the
 // initial condition for the system equations is applied.
-Tube :: Tube (double Length,
+Tube :: Tube (size_t _order, double Length,
               double topradius, double botradius,
               Tube *LeftParent, Tube *RightParent,
               Tube *LeftDaughter, Tube *RightDaughter,
-              double rmin, double points, int init, double KLD, double KRD, double KLP, double KRP,
-              double f1, double f2, double f3, double fa1, double fa2, double fa3, double trmrst):
-	L(Length),
+              double _rmin, double points, int init, double KLD, double KRD, double KLP, double KRP,
+              double f1, double f2, double f3, double fa1, double fa2, double fa3, 
+              double trmrst, double alpha_value, double beta_value):
+	order(_order),L(Length),
 	rtop(topradius),
 	rbot(botradius),
 	LP(LeftParent),
@@ -80,10 +82,10 @@ Tube :: Tube (double Length,
 	K_loss_RD(KRD),
 	K_loss_LP(KLP),
 	K_loss_RP(KRP),
-	ff1(f1),
-	ff2(f2),
-	ff3(f3),
-    termresist(trmrst)
+	ff1(f1),ff2(f2),ff3(f3),
+  ffa1(fa1),ffa2(fa2),ffa3(fa3),
+  rmin(_rmin),termresist(trmrst),
+  _alpha_value(alpha_value),_beta_value(beta_value)
 {
   // Initialization of the basic parameters
   N	  = int(pts*L);
@@ -173,25 +175,6 @@ Tube :: Tube (double Length,
                        // non-dimensional.
     }
   }
-
-  // In case of an end-tube evaluate the impedances for the boundary condition.
-  // This is done by calling the f90 routine root_imp which calculates the
-  // impedance at the root of a structured tree. The underscores is sensitive
-  // to the compiler but can be seen at the bottom of the file root_imp.o.
-  if (LD == 0)
-  {
-    fprintf(stdout,"Calling f90 subroutines\n");
-
-    impedance_driver_(&tmstps,&Period,&fa1,&fa2,&fa3,&rho,&mu_pl,&rbot,&rmin,y,&Lr,&Fr2,&q,&g,&termresist);
-    printf("Finished with f90 subroutines.\n\n");
-
-    // Initialize the array pL used when determining the convolution
-    // in the right boundary condition (see the subroutine bound_right).
-    for (int j=0; j<tmstps; j++)
-    {
-      pL[j] = 0.0;
-    };
-  };
 }
 
 // The destructor. When the tube-objects terminates, all arrays are deleted,
@@ -232,6 +215,18 @@ Tube :: ~Tube ()
   delete[] dp1dr0h;
 }
 
+
+// set out flow condition for small tree 20230411 17:25
+void Tube :: initSmallTree(){
+  reinitResistance();
+  for (int j=0; j<tmstps; j++) pL[j] = 0.0;
+}
+
+void Tube :: reinitResistance(){
+  fprintf(stdout,"Calling f90 subroutines to init Resistance y\n");
+  impedance_driver_(&tmstps,&Period,&_alpha_value,&_beta_value,&ffa1,&ffa2,&ffa3,&rho,&mu_pl,&rbot,&rmin,y,&Lr,&Fr2,&q,&g,&termresist);
+  printf("Finished to init Resistance y with f90 subroutines.\n\n");
+}
 // ----------------------PLOTTING ROUTINES WITH DIMENSIONS ------------
 
 void Tube :: printQ0 (FILE *fd)
@@ -1405,7 +1400,10 @@ void Tube :: bound_bif_right (double theta, double gamma)
 //   }
 // }
 
-void solver (Tube *Arteries[], double tstart, double tend, double k)
+void solver (Tube *Arteries[], double tstart, double tend, double k, 
+            const std::set<int> &ID_Out, 
+            const std::set<int> &ID_Bif, 
+            const std::set<int> &ID_Merge)
 {
   // The following definitions only used when a variable time-stepping is
   // used.
@@ -1441,19 +1439,23 @@ void solver (Tube *Arteries[], double tstart, double tend, double k)
     }
     // Update left and right boundaries, and the bifurcation points.
     Arteries[0] -> bound_left(t+k, k, Period);
-    for (int i=0; i<nbrves; i++)
+    for (auto i: ID_Out)
     {
-      if (Arteries[i] -> LD == 0)
-      {
-        Arteries[i] -> bound_right (qLnb, k, k/Arteries[i]->h, t);
-      }
-      else
-      {
-        double theta = k/Arteries[i]->h;
-	double gamma = k/2;
-        Arteries[i] -> bound_bif_right (theta, gamma);
-      }
+      Arteries[i] -> bound_right (qLnb, k, k/Arteries[i]->h, t);
     }
+    for (auto i: ID_Bif)
+    {
+      double theta = k/Arteries[i]->h;
+	    double gamma = k/2;
+      Arteries[i] -> bound_bif_right (theta, gamma);
+    }
+    for (auto i: ID_Merge)
+    {
+      double theta = k/Arteries[i]->h;
+	    double gamma = k/2;
+      Arteries[i] -> bound_bif_left (theta, gamma);
+    }
+
     // Update the time and position within one period.
     t = t + k;
     qLnb = (qLnb + 1) % tmstps;

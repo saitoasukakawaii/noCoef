@@ -29,7 +29,7 @@ int    zero         (double  *x, int n, double tolx, double tolf,
                      double fvec[], double *fjac[]);
 bool   zero_1d      (double *x, double f, double df, double tolx);
 
-void get_ID(const string &FileName, set<int>& ID_Out, set<int>& ID_Bif);
+void get_ID(const string &FileName, set<int>& ID_Out, set<int>& ID_Bif, set<int> &ID_Merge);
 
 inline double sq(double x) { return x*x; }
 inline double cu(double x) { return x*x*x; }

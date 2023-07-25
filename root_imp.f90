@@ -28,10 +28,10 @@ public impedance_init, impedance_close
 integer, parameter   :: Maxgen = 80
 
 ! The asymmetry ratio of the structured tree
-real(lng), parameter :: asym   = 0.4048
+! real(lng), parameter :: asym   = 0.4048
 
 ! Exponent in radius relation.
-real(lng), parameter :: expo   = 2.7_lng
+! real(lng), parameter :: expo   = 2.7_lng
 
 ! A temporary matrix for storing root impedances in parts of the
 ! structured tree, those which are repeated because of the constant
@@ -77,11 +77,12 @@ contains
 !* g         The gravitational force, cm/s^2.                              *
 !*                                                                         *
 !***************************************************************************
-recursive function Z0func (omega_k, alpha_pow,beta_pow,ff1,ff2,ff3,rho,mu,r_root,r_min,trm_rst,Lr,Fr2,q,g) result (Z0)
+recursive function Z0func (omega_k, alpha_value, beta_value, alpha_pow,beta_pow, &
+                          ff1,ff2,ff3,rho,mu,r_root,r_min,trm_rst,Lr,Fr2,q,g) result (Z0)
 implicit none
 
   integer, intent(in)   :: alpha_pow, beta_pow
-  real(lng), intent(in) :: omega_k,ff1,ff2,ff3,rho,mu,r_root,r_min,trm_rst,Lr,Fr2,q,g
+  real(lng), intent(in) :: omega_k,ff1,ff2,ff3,rho,mu,r_root,r_min,trm_rst,Lr,Fr2,q,g,alpha_value, beta_value
   
   integer      :: generations
   real(lng)    :: nu, r, r_d, l, lrr, A, A_d, D, wom
@@ -95,8 +96,8 @@ implicit none
   lrr   = 50.0_lng                   ! Length to radius ratio.
   !wrr  = 0.154_lng                  ! Wall-thickness to radius ratio.
 
-  beta  = ((asym**(expo/2)+1.0)**(-1/expo))**beta_pow  ! Scaling parameter.
-  alpha = (sqrt(asym)*(asym**(expo/2)+1.0)**(-1/expo))**alpha_pow   ! do.
+  beta  = beta_value**beta_pow    ! ((asym**(expo/2)+1.0)**(-1/expo))**beta_pow  ! Scaling parameter.
+  alpha = alpha_value**alpha_pow  ! (sqrt(asym)*(asym**(expo/2)+1.0)**(-1/expo))**alpha_pow   ! do.
   !write(*,*) 'Beta', beta**(1.0d0/beta_pow)
   !write(*,*) 'Alpha',alpha**(1.0d0/alpha_pow)
 
@@ -174,13 +175,13 @@ implicit none
     if (abs(Computed(alpha_pow+1, beta_pow)) /= 0.0) then
       Zl_0 = Computed(alpha_pow+1, beta_pow)
     else  
-      Zl_0 = Z0func (omega_k,alpha_pow+1,beta_pow,ff1,ff2,ff3,rho,mu,r_root,r_min,trm_rst,Lr,Fr2,q,g)
+      Zl_0 = Z0func (omega_k, alpha_value, beta_value,alpha_pow+1,beta_pow,ff1,ff2,ff3,rho,mu,r_root,r_min,trm_rst,Lr,Fr2,q,g)
     end if
 
     if (abs(Computed(alpha_pow, beta_pow+1)) /= 0.0) then
       Zr_0 = Computed(alpha_pow, beta_pow+1)
     else
-      Zr_0 = Z0func (omega_k,alpha_pow,beta_pow+1,ff1,ff2,ff3,rho,mu,r_root,r_min,trm_rst,Lr,Fr2,q,g)
+      Zr_0 = Z0func (omega_k, alpha_value, beta_value,alpha_pow,beta_pow+1,ff1,ff2,ff3,rho,mu,r_root,r_min,trm_rst,Lr,Fr2,q,g)
     end if
 
     ! Prediction of the resulting impedance from the recursion formula.
@@ -233,11 +234,11 @@ end function Z0func
 !* Z_om at each generation.                                                *
 !*                                                                         *
 !***************************************************************************
-function comp_imp (N,Omega,trm_rst,ff1,ff2,ff3,rho,mu,r_root,r_min,Lr,Fr2,q,g) result (Z_om)
+function comp_imp (N,Omega, alpha_value, beta_value,trm_rst,ff1,ff2,ff3,rho,mu,r_root,r_min,Lr,Fr2,q,g) result (Z_om)
 implicit none
 
   integer, intent(in)       :: N
-  real(lng), intent(in)     :: Omega(:),trm_rst,ff1,ff2,ff3,rho,mu,r_root,Lr,Fr2,q,g,r_min
+  real(lng), intent(in)     :: Omega(:),trm_rst,ff1,ff2,ff3,rho,mu,r_root,Lr,Fr2,q,g,r_min, alpha_value, beta_value
   complex(lng)              :: temp, Z_om(N)
   integer                   :: k
 
@@ -259,7 +260,7 @@ implicit none
     ! Since Z_om only has N places leave result for the frequency k at
     ! Z_om(k-1) we will later make up for this.
 
-    Z_om(k-1) = Z0func (Omega(k),0,0,ff1,ff2,ff3,rho,mu,r_root,r_min,trm_rst,Lr,Fr2,q,g)
+    Z_om(k-1) = Z0func (Omega(k), alpha_value, beta_value,0,0,ff1,ff2,ff3,rho,mu,r_root,r_min,trm_rst,Lr,Fr2,q,g)
   end do 
   
   temp = Z_om (N/2)
@@ -398,11 +399,11 @@ end function comp_imp
 !   return
   
 ! end subroutine impedance
-subroutine impedance (tmstps,Period,ff1,ff2,ff3,rho,mu,r_root,r_min,y_xt,Lr,Fr2,q,g,trm_rst)
+subroutine impedance (tmstps,Period, alpha_value, beta_value,ff1,ff2,ff3,rho,mu,r_root,r_min,y_xt,Lr,Fr2,q,g,trm_rst)
   implicit none
   
     integer,   intent(in)      :: tmstps
-    real(lng), intent(in)      :: Period,ff1,ff2,ff3,rho,mu,Lr,Fr2,q,g,r_root,r_min,trm_rst
+    real(lng), intent(in)      :: Period,ff1,ff2,ff3,rho,mu,Lr,Fr2,q,g,r_root,r_min,trm_rst, alpha_value, beta_value
   ! real(lng)                  :: z_xt(tmstps)
     real(lng)                  :: y_xt(tmstps)
   
@@ -431,7 +432,7 @@ subroutine impedance (tmstps,Period,ff1,ff2,ff3,rho,mu,r_root,r_min,y_xt,Lr,Fr2,
     !trm_rst = 0     ! Terminal resistance could be (nb_terms*resist)
   
     ! Compute the impedance at the root of the structured tree.
-    Z_om =comp_imp (tmstps,Omega,trm_rst,ff1,ff2,ff3,rho,mu,r_root,r_min,Lr,Fr2,q,g)
+    Z_om =comp_imp (tmstps,Omega, alpha_value, beta_value,trm_rst,ff1,ff2,ff3,rho,mu,r_root,r_min,Lr,Fr2,q,g)
     ! Z_om(1) = real(Z_om(1),lng)   ! Dirty hack, that makes Z_om real
                                   ! first at the lowest frequency.
   

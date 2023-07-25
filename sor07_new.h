@@ -41,6 +41,8 @@ double conv   = 1332.20,              // Conversion from mmHg to SI-units.
        fa1  = 1.89e+07,
        fa2  = -18.34,
        fa3  = 3.53e+06,
+       alpha_value_ST = 0.91, 
+       beta_value_ST = 0.58, 
        //ff1  = 1.99925e07,
        //ff2  = -25.5267,
        //ff3  = 465251,
@@ -57,7 +59,7 @@ double conv   = 1332.20,              // Conversion from mmHg to SI-units.
        //Fcst = 10.0,                 // Determines the damping coeff.
        Fcst   = 22, //17.7778,        // Determines the damping coeff.
                                       // for the friction.
-       alpha  = 4./3,
+       // alpha  = 4./3,
        Lr     = 1.0,                  // Characteristic radius of the
                                       // vessels in the tree [cm].
        Lr2    = sq(Lr),               // The squared radius [cm2].

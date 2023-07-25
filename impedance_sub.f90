@@ -1,12 +1,25 @@
-subroutine impedance_driver(tmstps,Period,ff1,ff2,ff3,rho,mu,r_root,r_min,y_xt,Lr,Fr2,q,g,trm_rst)
+subroutine impedance_driver(tmstps,Period, alpha_value, beta_value,ff1,ff2,ff3,rho,mu,r_root,r_min,y_xt,Lr,Fr2,q,g,trm_rst)
   use f90_tools
   use root_imp 
   implicit none
 
   integer, intent(in)    :: tmstps
-  real(lng), intent(in)  :: Period,ff1,ff2,ff3,rho,mu,r_root,r_min,Lr,Fr2,q,g,trm_rst
+  real(lng), intent(in)  :: Period,ff1,ff2,ff3,rho,mu,r_root,r_min,Lr,Fr2,q,g,trm_rst, alpha_value, beta_value
   real(lng), intent(out) :: y_xt(tmstps)
 
 
-  call impedance (tmstps,Period,ff1,ff2,ff3,rho,mu,r_root,r_min,y_xt,Lr,Fr2,q,g,trm_rst)
+  call impedance (tmstps,Period, alpha_value, beta_value,ff1,ff2,ff3,rho,mu,r_root,r_min,y_xt,Lr,Fr2,q,g,trm_rst)
 end subroutine impedance_driver
+
+! impedance_driver(tmstps,Period,ff1,ff2,ff3,rho,mu,r_root,r_min,y_xt,Lr,Fr2,q,g,trm_rst)
+
+subroutine impedance_init_driver(tmstps)
+  use f90_tools
+  use root_imp 
+  implicit none
+
+  integer, intent (in) :: tmstps
+
+  call impedance_init(tmstps)
+
+end subroutine impedance_init_driver

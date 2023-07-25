@@ -28,6 +28,7 @@ extern double   conv, rho, mu, mu_pl, nu, Lr, Lr2, Lr3, g, q, Fr2,
 // The class structure.
 class Tube {
 public:
+  size_t order;                 // the order of vessel
   double L;                    // The length of the vessel
   double rtop, rbot;           // The top and bottom radii of the vessel
   Tube *LD, *RD;               // The left and right daughter-vessels. If
@@ -40,8 +41,8 @@ public:
   	     K_loss_RD,
 	       K_loss_LP,
 	       K_loss_RP;
-  double ff1, ff2, ff3;
-  double termresist;
+  double ff1, ff2, ff3, ffa1, ffa2, ffa3, rmin;
+  double termresist, _alpha_value, _beta_value;
 
   int N;                       // The number of grid points along the vessel
   double h;                    // The interval length of delta x
@@ -61,16 +62,19 @@ public:
 	 *p1, *p1h,
 	 *dp1dr0, *dp1dr0h;
 
-  Tube (double Length,
+  Tube (size_t _order, double Length,
         double topradius, double botradius,
         Tube *LeftParent, Tube *RightParent,
         Tube *LeftDaughter, Tube *RightDaughter,
-        double rmin, double points, int init, double KLD, double KRD, double KLP, double KRP,
-        double f1, double f2, double f3, double fa1, double fa2, double fa3, double trmrst);
+        double _rmin, double points, int init, double KLD, double KRD, double KLP, double KRP,
+        double f1, double f2, double f3, double fa1, double fa2, double fa3,
+        double trmrst, double alpha_value, double beta_value);
                                                          // Constructor.
   ~Tube ();                                              // Destructor.
 
-
+// set out flow condition for small tree 20230411 17:25
+  void initSmallTree();
+  void reinitResistance();
   // Prints P(x_fixed,t), A(x_fixed,t), F(x_fixed,t), or Q(x_fixed,t) for all
   // t's along the tube.
   void printQ0  (FILE *fd);
@@ -201,6 +205,9 @@ private:
 };
 
 // void solver (Tube *Arteries[], double tstart, double tend, double k, set<int>& ID_Out, set<int>& ID_Bif);
-void solver (Tube *Arteries[], double tstart, double tend, double k);
+void solver (Tube *Arteries[], double tstart, double tend, double k, 
+            const std::set<int> &ID_Out, 
+            const std::set<int> &ID_Bif, 
+            const std::set<int> &ID_Merge);
 
 #endif

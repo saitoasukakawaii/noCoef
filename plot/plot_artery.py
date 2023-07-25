@@ -10,8 +10,13 @@ import os
 import re
 import sys
 
-mpl.rcParams["font.family"] = "Times New Roman"
-mpl.rcParams["font.size"] = 18
+config = {
+    "font.family": 'Arial', # Times New Roman
+    #"font.size": 16,
+    "mathtext.fontset": 'stix',
+    # "font.serif": ['Helvetica'],
+}
+mpl.rcParams.update(config)
 
 def plot_pwave(number):
     '''
@@ -66,14 +71,16 @@ if __name__ == "__main__":
     # this section is used to obtain all object diractories in the current dir
     print(f"Arguments count: {len(sys.argv)}")
     Arteries = []
-    for i, arg in enumerate(sys.argv):
-        print(f"Argument {i:>6}: {arg}")
-        if i>0:
-            Arteries.append(int(arg))
-    print(Arteries)
-    for i in Arteries:
-        plot_pwave(i)
-        plot_qwave(i)
+    # for i, arg in enumerate(sys.argv):
+    #     print(f"Argument {i:>6}: {arg}")
+    #     if i>0:
+    #        Arteries.append(int(arg))
+    # print(Arteries)
+    for j, arg in enumerate(sys.argv):
+        if j>0:
+    	    for i in range(int(arg)):
+                plot_pwave(i+1)
+                plot_qwave(i+1)
     # root = os.getcwd()
     # matchStr = re.compile(r"jcj_58_jcj_inlet.*")
     # dirAll = []
