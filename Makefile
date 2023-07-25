@@ -33,7 +33,7 @@ LDFLAGS=-O3
 MAIN=sor07_new
 
 OBJS1=tools.o ${MAIN}.o arteries.o
-OBJS2=impedance_sub.o impedance_init_sub.o root_imp.o f90_tools.o special_functions.o
+OBJS2=impedance_sub.o root_imp.o f90_tools.o special_functions.o
 
 
 .PHONY: all
@@ -67,8 +67,6 @@ special_functions.o: special_functions.f90
 impedance_sub.o: impedance_sub.f90 f90_tools.o root_imp.o
 	$(FC) -c $(FFLAGS) impedance_sub.f90
 	
-impedance_init_sub.o: impedance_init_sub.f90 f90_tools.o root_imp.o
-	$(FC) -c $(FFLAGS) impedance_init_sub.f90
 
 .PHONY: clean
 clean:

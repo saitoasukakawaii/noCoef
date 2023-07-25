@@ -10,3 +10,14 @@ subroutine impedance_driver(tmstps,Period,ff1,ff2,ff3,rho,mu,r_root,r_min,y_xt,L
 
   call impedance (tmstps,Period,ff1,ff2,ff3,rho,mu,r_root,r_min,y_xt,Lr,Fr2,q,g,trm_rst)
 end subroutine impedance_driver
+
+subroutine impedance_init_driver(tmstps)
+  use f90_tools
+  use root_imp 
+  implicit none
+
+  integer, intent (in) :: tmstps
+
+  call impedance_init(tmstps)
+
+end subroutine impedance_init_driver
