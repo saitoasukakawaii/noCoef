@@ -224,3 +224,24 @@ void get_ID(const string &FileName, set<int>& ID_Out, set<int>& ID_Bif, set<int>
   VascularTopoloy.close();
 }
 
+
+
+void thomas (double *a, double *b, double *c, double *x, int n)
+{
+  int i;
+  double g = 0;
+  if(fabs(b[0])<EPS) {fprintf (stdout, "...singular in thomas exit...\n"); exit (0);}
+  c[0] = c[0]/b[0];
+  x[0] = x[0]/b[0];
+  for ( int i=1; i<n; ++i)
+  {
+    g = (b[i]-a[i]*c[i-1]);
+    if(fabs(g)<EPS) {fprintf (stdout, "...singular in thomas exit...\n"); exit (0);}
+    c[i] /= g;
+    x[i] = (x[i]-a[i]*x[i-1])/g;
+  }
+  for (int i=n-2; i>=0; --i)
+  {
+    x[i] = x[i]-c[i]*x[i+1];
+  }
+}

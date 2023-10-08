@@ -23,7 +23,11 @@
 extern double   conv, rho, mu, mu_pl, nu, Lr, Lr2, Lr3, g, q, Fr2,
                 Re, p0, pmean, tmst, Period, Fcst, alpha, CO, COm,
                 Deltat, tau, m1, m2, m3, m4,  
-	              *fjac[18], xr, f, df;
+	              *fjac[18], xr, f, df, 
+                ke_no, nno_0, delta_no_inner, delta_no_middle, D_inner, D_middle,
+                alpha1_ca, k2_ca, Cca_th, 
+                phica_0, cGMP0, alpha2_cGMP, 
+                gamma_cGMP, epsilon_cGMP, k3, dr;
 
 // The class structure.
 class Tube {
@@ -60,7 +64,14 @@ public:
 	 *fr, *frh,
 	 *dfrdr0, *dfrdr0h,
 	 *p1, *p1h,
-	 *dp1dr0, *dp1dr0h;
+	 *dp1dr0, *dp1dr0h,
+   *nno_new, *nno_old,        // tang model NO
+   *Cca_new, *Cca_old,        // Ca2+
+   *cGMP_new, *cGMP_old;       // linsuanjiqiudanbai
+double h_thickness,           // thickness by R_{middle}
+  h_inner,
+  h_middle, *r_middle, *aa, *bb, *cc, AVEF;
+int num1,num2,numall;
 
   Tube (size_t _order, double Length,
         double topradius, double botradius,
@@ -93,7 +104,10 @@ public:
   void printQxt (FILE *fd, double t, int offset);
   void printCxt (FILE *fd, double t, int offset);
   void printUxt (FILE *fd, double t, int offset);
-
+  void printNOxt (FILE *fd, double t, int offset);
+  void printCAxt (FILE *fd, double t, int offset);
+  void printcGMPxt (FILE *fd, double t, int offset);
+  void printWSSxt (FILE *fd, double t, int offset);
   // Prints P as a function of Q and A, respectively,  at a given location x.
   void printPQ (FILE *fd, int i);
   void printPA (FILE *fd, int i);
@@ -156,6 +170,8 @@ public:
   // Steps through interior points.
   void step (double k);
 
+  void step_tang (double k);
+  void init_tang();
 
   // Updates left bndry. This should only be done for the inlet tube.
   void bound_left (double t, double k, double Period);
@@ -198,6 +214,26 @@ inline double dFdA (double Q, double A)
   return(Fcst*M_PI*Q/(sq(A)*Re));
 }
 
+
+inline double h_blanco2014(double R0)
+{
+  return R0*( 0.2802*exp(-5.053*R0)+0.1324*exp(-0.1114*R0) )/Lr;
+}
+inline double WSS(double Q, double A)
+{
+  // return WSS with the unit of g/(cm*s^2)
+  double QQ=Q*q;
+  double AA=A*Lr2;
+  return fabs( 0.5*Fcst*mu*QQ/AA/sqrt(AA/M_PI) ); // \tau = (2+\xi) \mu Q/A/R, \xi = 9 from kudryashov 2008
+}
+
+inline double RNO_hyp(double WSS)
+{
+  
+  return (2.13+457.5*(WSS/(WSS+35)))/1000;    // liu xiao 2014 hyp unit: nmol/L/s to mu mol/L/s
+  // return 150*WSS/24;                  // liu xiao 2014 linear unit: mu mol/L/s
+}
+
 private:
   // The private function Q0 may only be accessed from the left boundary
   // function. It ensures a certain and given CO (defined in main.h).
@@ -209,5 +245,5 @@ void solver (Tube *Arteries[], double tstart, double tend, double k,
             const std::set<int> &ID_Out, 
             const std::set<int> &ID_Bif, 
             const std::set<int> &ID_Merge);
-
+void solver_NO (Tube *Arteries[], double tstart, double tend, double k);
 #endif

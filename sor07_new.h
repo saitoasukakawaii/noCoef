@@ -19,8 +19,8 @@
 
 int    nbrves, N_aorta;               // Number of vessels in the tree.
 
-int    tmstps = 16384,                 // The number of timesteps per period.
-       plts   = 1024;                 // Number of plots per period.
+int    tmstps = 16384,                 // The number of timesteps per period. 16384
+       plts   = 128;                 // Number of plots per period.
 
 const char *CO_filename = "input.dat";     // Input flow file at the heart.
 
@@ -57,8 +57,8 @@ double conv   = 1332.20,              // Conversion from mmHg to SI-units.
        m4     = 0.21763,
 
        //Fcst = 10.0,                 // Determines the damping coeff.
-       Fcst   = 22, //17.7778,        // Determines the damping coeff.
-                                      // for the friction.
+       Fcst   = 22, //17.7778,        // Determines the damping coeff. Fcst = (2+\xi)*2
+                                      // for the friction.             \xi = 9
        // alpha  = 4./3,
        Lr     = 1.0,                  // Characteristic radius of the
                                       // vessels in the tree [cm].
@@ -81,5 +81,28 @@ double conv   = 1332.20,              // Conversion from mmHg to SI-units.
 // double ahpha_a=0.9,                   // the ratio of area at stenosis
 //        ku = 1.2,                      // kv is a function, ku,kt are constant.
 //        kt = 1.5;
+
+                                                        // unit:
+double ke_no = 1.0*(Lr3/q),                             // 1/s to dimensionless
+       nno_0 = 0.1,                                     // mu mol/L       
+       delta_no_inner = 0.1*(Lr3/q),                          // 1/s to dimensionless
+       delta_no_middle = 0.01*(Lr3/q),                          // 1/s to dimensionless
+       alpha1_ca = 0.05*(Lr3/q),                        // 1/s to dimensionless
+       D_inner = 3300e-8*(Lr3/q)/Lr2,                   // cm^2/s to dimensionless
+       D_middle = 3300e-8*(Lr3/q)/Lr2,                  // cm^2/s to dimensionless
+       k2_ca = 0.9*0.015*(Lr3/q)*nno_0,                 // L/s/(mu mol) to dimensionless
+                                                        // 0.9 is the damp from endothelium to media layer from tang results
+       Cca_th = 0.1,                                    // mu mol/L  
+       phica_0 = 5.81e-3*(Lr3/q)/Cca_th,                // mu mol/L/s to dimensionless
+       cGMP0 = 0.2616,                                  // mu mol
+       alpha2_cGMP = 0.5*(Lr3/q),                       // 1/s to dimensionless
+       gamma_cGMP = 10*(Lr3/q)*Cca_th/cGMP0,            // 1/s to dimensionless
+       epsilon_cGMP = 0.1,    
+       k3 = 153320/(rho*g*Lr)*(2000/450);               // tang k3 = P0*R0/F0/h0    F0 omite here due to contain in F
+                                                        // F0 is same as cGMP0    
+
+
+double dr = 1e-3;
+
 
 #endif

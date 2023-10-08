@@ -130,7 +130,35 @@ Tube :: Tube (size_t _order, double Length,
 
   double rgLr  = 4/3/rho/g/Lr;
   double rgLr2 = 4/3/rho/g/Lr2;
+  double r0_middle = (rbot+rtop)*0.5;
+  h_thickness = h_blanco2014(r0_middle);
+  h_inner = h_thickness*0.1;
+  h_middle = h_thickness*0.6;
+  // num1 = int(h_inner/dr)+1;
+  num2 = int(h_middle/dr)+1;
+  numall = int((h_middle+h_inner)/dr)+1;
 
+  r_middle = new double[numall];
+  nno_old = new double[numall];
+  nno_new = new double[numall];
+  Cca_new = new double[num2];
+  Cca_old = new double[num2];  
+  cGMP_new = new double[num2];
+  cGMP_old = new double[num2];
+  aa = new double[numall];
+  bb = new double[numall];
+  cc = new double[numall];
+  for (int i =0;i<numall;i++)
+  {
+    r_middle[i] = r0_middle+i*dr;
+  }
+  // fprintf(stdout, "inner before: %f\n",h_inner);
+  // fprintf(stdout, "inner after: %f\n", num1*dr);
+  fprintf(stdout, "all number before: %d\n", num1+num2);
+  fprintf(stdout, "all number after: %d\n", numall);
+    fprintf(stdout, "all before: %f\n", r0_middle+h_thickness*0.7);
+  fprintf(stdout, "all after: %f\n", r_middle[numall-1]);
+  // r_middle = new double[numall];
   // Vessel geometry is tabulated and initial conditions are applied
   for (int i=0; i<=N; i++)
   {
@@ -185,6 +213,15 @@ Tube :: ~Tube ()
   delete[] Qnew;
   delete[] Aold;
   delete[] Qold;
+  delete[] nno_old;
+  delete[] nno_new;
+  delete[] Cca_new;
+  delete[] Cca_old; 
+  delete[] cGMP_new;
+  delete[] cGMP_old;
+  delete[] aa;
+  delete[] bb;
+  delete[] cc;
   delete[] Aprv;
   delete[] Qprv;
   delete[] Ah;
@@ -321,6 +358,33 @@ void Tube :: printUxt (FILE *fd, double t, int offset)
   {
     fprintf (fd, "%13.10f %13.10f %15.10f\n",
              t*Lr3/q, (i+offset)*h*Lr, Qnew[i]/Anew[i]*q/Lr2);
+  }
+}
+void Tube :: printNOxt (FILE *fd, double t, int offset)
+{
+  if (offset == 0) fprintf (fd, "\n");
+  for (int i=0; i<N; i++)
+  {
+    fprintf (fd, "%13.10f %13.10f %15.10f\n",
+             t*Lr3/q, (i+offset)*h*Lr, nno_new[i]*nno_0);
+  }
+}
+void Tube :: printCAxt (FILE *fd, double t, int offset)
+{
+  if (offset == 0) fprintf (fd, "\n");
+  for (int i=0; i<N; i++)
+  {
+    fprintf (fd, "%13.10f %13.10f %15.10f\n",
+             t*Lr3/q, (i+offset)*h*Lr, Cca_new[i]*Cca_th);
+  }
+}
+void Tube :: printcGMPxt (FILE *fd, double t, int offset)
+{
+  if (offset == 0) fprintf (fd, "\n");
+  for (int i=0; i<N; i++)
+  {
+    fprintf (fd, "%13.10f %13.10f %15.10f\n",
+             t*Lr3/q, (i+offset)*h*Lr, cGMP_new[i]*cGMP0);
   }
 }
 
@@ -606,6 +670,98 @@ void Tube :: step (double k)
   }
 }
 
+// init value
+void Tube :: init_tang()
+{
+  // middle 
+  int middle_position = int((N+1)/2)+1;
+  double WSS_middle = WSS(Qnew[middle_position],Anew[middle_position]);
+  double RNO_middle = RNO_hyp(WSS_middle)*Lr3/q/nno_0;
+  
+  double ne_NO = 1.0;
+  aa[0] = 0.;
+  bb[0] = 1.;
+  cc[0] = 0.;
+  nno_new[0] = ne_NO;
+  for (int i=1;i<numall-num2;++i)
+  {
+    aa[i] = -D_inner*(r_middle[i]-0.5*dr)/r_middle[i]/sq(dr);
+    bb[i] = +delta_no_inner+2*D_inner/sq(dr);
+    cc[i] = -D_inner*(r_middle[i]+0.5*dr)/r_middle[i]/sq(dr);
+    nno_new[i] = 0.0;
+  }
+  for (int i=numall-num2;i<numall-1;++i)
+  {
+    aa[i] = -D_middle*(r_middle[i]-0.5*dr)/r_middle[i]/sq(dr);
+    bb[i] = +delta_no_middle+2*D_middle/sq(dr);
+    cc[i] = -D_middle*(r_middle[i]+0.5*dr)/r_middle[i]/sq(dr);
+    nno_new[i] = 0.0;
+  }
+  aa[numall-1] = -D_middle*(r_middle[numall-1]-0.5*dr)/r_middle[numall-1]/sq(dr);
+  bb[numall-1] = +delta_no_middle+D_middle*(r_middle[numall-1]-0.5*dr)/r_middle[numall-1]/sq(dr);
+  cc[numall-1] = 0.;
+  nno_new[numall-1] = ne_NO;
+  thomas(aa,bb,cc,nno_new,numall);
+  int heviside = 0;
+  for (int i=0;i<num2;++i)
+  {
+      Cca_new[i] = phica_0/(alpha1_ca+k2_ca*nno_new[numall-num2+i]);
+      if (Cca_new[i]>1) heviside = 1; else heviside=0;
+      cGMP_new[i] = gamma_cGMP*(Cca_new[i]-1)*heviside/alpha2_cGMP;
+  }
+}
+
+void Tube :: step_tang (double k)
+{
+  int middle_position = int((N+1)/2)+1;
+  double WSS_middle = WSS(Qnew[middle_position],Anew[middle_position]);
+  double RNO_middle = RNO_hyp(WSS_middle)*Lr3/q/nno_0;
+  for (int i=0; i<numall; i++)  // Remember the values at this time level.
+  {
+    nno_old[i] = nno_new[i];
+  }
+  for (int i=0; i<num2; i++)  // Remember the values at this time level.
+  {
+    Cca_old[i] = Cca_new[i];        // Ca2+
+    cGMP_old[i] = cGMP_new[i];
+  }
+      
+
+  double ne_NO = ( nno_old[0] + k*RNO_middle ) / (1+k*(ke_no+delta_no_inner));
+  aa[0] = 0.;
+  bb[0] = 1.;
+  cc[0] = 0.;
+  nno_new[0] = ne_NO;
+  for (int i=1;i<numall-num2;++i)
+  {
+    aa[i] = -k*D_inner*(r_middle[i]-0.5*dr)/r_middle[i]/sq(dr);
+    bb[i] = 1+k*delta_no_inner+2*k*D_inner/sq(dr);
+    cc[i] = -k*D_inner*(r_middle[i]+0.5*dr)/r_middle[i]/sq(dr);
+  }
+  for (int i=numall-num2;i<numall-1;++i)
+  {
+    aa[i] = -k*D_middle*(r_middle[i]-0.5*dr)/r_middle[i]/sq(dr);
+    bb[i] = 1+k*delta_no_middle+2*k*D_middle/sq(dr);
+    cc[i] = -k*D_middle*(r_middle[i]+0.5*dr)/r_middle[i]/sq(dr);
+  }
+  aa[numall-1] = -k*D_middle*(r_middle[numall-1]-0.5*dr)/r_middle[numall-1]/sq(dr);
+  bb[numall-1] = 1+k*delta_no_middle+k*D_middle*(r_middle[numall-1]-0.5*dr)/r_middle[numall-1]/sq(dr);
+  cc[numall-1] = 0.;
+  thomas(aa,bb,cc,nno_new,numall);
+  int heviside = 0;
+  for (int i=0;i<num2;++i)
+  {
+    Cca_new[i] = ( Cca_old[i] + k*phica_0 ) / (1+k*(alpha1_ca+k2_ca*nno_new[numall-num2+i]));
+    if (Cca_new[i]>1) heviside = 1; else heviside=0;
+    cGMP_new[i] = ( cGMP_old[i] + k*gamma_cGMP*(Cca_new[i]-1)*heviside ) / (1+k*alpha2_cGMP);
+  }
+  AVEF = 0.0;
+  for (int i=0;i<num2-1;++i)
+  {
+    AVEF += (cGMP_new[i]*r_middle[numall-num2+i]+cGMP_new[i+1]*r_middle[numall-num2+i+1])*dr/2;
+  }
+  AVEF = AVEF*2/(sq(r_middle[numall-1])-sq(r_middle[numall-num2]));
+}
 // The left boundary (x=0) uses this function to model an inflow into
 // the system. The actual parameter given to the function is the model time.
 // As stated in the mathematical model the constants of the function are
@@ -1455,9 +1611,52 @@ void solver (Tube *Arteries[], double tstart, double tend, double k,
 	    double gamma = k/2;
       Arteries[i] -> bound_bif_left (theta, gamma);
     }
+    // for (int i=0; i<nbrves; i++)
+    // {
+    //   Arteries[i] -> step_tang (k);
+    // }
 
     // Update the time and position within one period.
     t = t + k;
     qLnb = (qLnb + 1) % tmstps;
+  }
+}
+
+
+void init_solver_NO (Tube *Arteries[])
+{
+  for (int i=0; i<nbrves; i++)
+  {
+    Arteries[i] -> init_tang ();
+  }
+}
+
+void solver_NO (Tube *Arteries[], double tstart, double tend, double k)
+{
+  // The following definitions only used when a variable time-stepping is
+  // used.
+
+  double t    = tstart;
+  // int qLnb = (int) fmod(t/k,tmstps);
+
+  // As long as we haven't passed the desired ending time do:
+  while (t < tend)
+  {
+    // Check that the step we take is valid. If this error occurs when forcing
+    // a constant step-size the program must be terminated.
+    if (t+k > tend)
+    {
+      double kold = k;
+      k = tend - t;
+      printf("ERROR (arteries.C): Step-size changed, t+k=%10.15f, tend=%10.15f k=%10.15f kold=%10.15f\n",t+kold,tend,k,kold);
+    }
+    for (int i=0; i<nbrves; i++)
+    {
+      // Arteries[i] -> step_tang (k);
+    }
+
+    // Update the time and position within one period.
+    t = t + k;
+    // qLnb = (qLnb + 1) % tmstps;
   }
 }

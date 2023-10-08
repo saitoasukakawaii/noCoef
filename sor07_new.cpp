@@ -18,7 +18,8 @@ using namespace std;
 int main(int argc, char *argv[])
 {
   double tstart, tend, finaltime;
-
+  double NOtstart, NOfinaltime, NOtend;
+                               // is reached.
   // normal range of rmin of small vessel is 0.01~0.04
   double rm4 = 0.03;
   int point = 8;
@@ -31,16 +32,28 @@ int main(int argc, char *argv[])
   // pressure and flow file point name:
   vector<string> nameP(nbrves, "./result/p");
   vector<string> nameQ(nbrves, "./result/q");
+  vector<string> nameA(nbrves, "./result/A");
+  vector<string> nameNO(nbrves, "./result/NO");
+  vector<string> nameCA(nbrves, "./result/CA");
+  vector<string> namecGMP(nbrves, "./result/cGMP");
   FILE *fp[nbrves];
   FILE *fq[nbrves];
+  FILE *fa[nbrves];
+  FILE *fNO[nbrves];
+  FILE *fCA[nbrves];
+  FILE *fcGMP[nbrves];
   for(int i=0;i<nbrves;i++)
   {
     auto j=i+1;
     nameP[i] += to_string(j);
     nameQ[i] += to_string(j);
+    nameA[i] += to_string(j);
+    nameNO[i] += to_string(j);
+    nameCA[i] += to_string(j);
+    namecGMP[i] += to_string(j);
   }
-  const char *nameA1 = "./result/A1";
-  const char *nameC1 = "./result/C1";
+  // const char *nameA1 = "./result/A1";
+  // const char *nameC1 = "./result/C1";
 
 
   // open pressure and flow file and declare the point:
@@ -55,11 +68,27 @@ int main(int argc, char *argv[])
     string SuccessInfo2 = "File "+to_string(j)+"q OK \n";
     string FailInfo2 = "File "+to_string(j)+"q NOT OK \n";
     if (fq[i]) fprintf(stdout, "%s", (SuccessInfo2).c_str()); else error("main.C", (FailInfo2).c_str());
+    fa[i] = fopen((nameA[i]).c_str(), "w");
+    string SuccessInfo3 = "File "+to_string(j)+"a OK \n";
+    string FailInfo3 = "File "+to_string(j)+"a NOT OK \n";
+    if (fa[i]) fprintf(stdout, "%s", (SuccessInfo3).c_str()); else error("main.C", (FailInfo3).c_str());
+    fNO[i] = fopen((nameNO[i]).c_str(), "w");
+    string SuccessInfo4 = "File "+to_string(j)+"NO OK \n";
+    string FailInfo4 = "File "+to_string(j)+"NO NOT OK \n";
+    if (fNO[i]) fprintf(stdout, "%s", (SuccessInfo4).c_str()); else error("main.C", (FailInfo4).c_str());
+    fCA[i] = fopen((nameCA[i]).c_str(), "w");
+    string SuccessInfo5 = "File "+to_string(j)+"CA OK \n";
+    string FailInfo5 = "File "+to_string(j)+"CA NOT OK \n";
+    if (fCA[i]) fprintf(stdout, "%s", (SuccessInfo5).c_str()); else error("main.C", (FailInfo5).c_str());
+    fcGMP[i] = fopen((namecGMP[i]).c_str(), "w");
+    string SuccessInfo6 = "File "+to_string(j)+"cGMP OK \n";
+    string FailInfo6 = "File "+to_string(j)+"cGMP NOT OK \n";
+    if (fcGMP[i]) fprintf(stdout, "%s", (SuccessInfo6).c_str()); else error("main.C", (FailInfo6).c_str());
   }
-  FILE *fA1 = fopen(nameA1, "w");
-  if (fA1) fprintf(stdout, "File 1A OK \n"); else error("main.C", "File 1A NOT OK");
-  FILE *fC1 = fopen(nameC1, "w");
-  if (fC1) fprintf(stdout, "File 1C OK \n"); else error("main.C", "File 1C NOT OK");
+  // FILE *fA1 = fopen(nameA1, "w");
+  // if (fA1) fprintf(stdout, "File 1A OK \n"); else error("main.C", "File 1A NOT OK");
+  // FILE *fC1 = fopen(nameC1, "w");
+  // if (fC1) fprintf(stdout, "File 1C OK \n"); else error("main.C", "File 1C NOT OK");
 
   // Workspace used by bound_bif
   for(int i=0; i<18; i++) fjac[i] = new double[18];
@@ -67,7 +96,11 @@ int main(int argc, char *argv[])
   clock_t c1 = clock();        // Only used when timing the program.
   tstart     = 0.0;            // Starting time.
   finaltime  = 8*Period;       // Final end-time during a simulation.
-  tend       = 7*Period;       // Timestep before the first plot-point
+  tend       = 0*Period;       // Timestep before the first plot-point
+                               // is reached.
+  NOtstart     = 0.0;            // Starting time.
+  NOfinaltime  = 20*Period;       // Final end-time during a simulation.
+  NOtend       = 0*Period;       // Timestep before the first plot-point
                                // is reached.
 
   // The number of vessels in the network is given when the governing array of
@@ -276,17 +309,6 @@ int main(int argc, char *argv[])
   // time in the above declaration.
   while (tend <= finaltime)
   {
-    for (int j=0; j<nbrves; j++)
-    {
-      int ArtjN = Arteries[j]->N;     // The number of grid points along the vessel
-      for (int i=0; i<ArtjN; i++)
-      {
-        Arteries[j]->Qprv[i+1] = Arteries[j]->Qnew[i+1];
-        Arteries[j]->Aprv[i+1] = Arteries[j]->Anew[i+1];
-      }
-    }
-
-
     // Solves the equations until time equals tend.
     solver (Arteries, tstart, tend, k, ID_Out, ID_Bif, ID_Merge);
     fprintf (stdout,".");
@@ -299,9 +321,14 @@ int main(int argc, char *argv[])
     {
       Arteries[i]->printPxt(fp[i], tend, 0);
       Arteries[i]->printQxt(fq[i], tend, 0);
+      Arteries[i]->printAxt(fa[i], tend, 0);
+      // Arteries[i]->printNOxt(fNO[i], tend, 0);
+      // Arteries[i]->printCAxt(fCA[i], tend, 0);
+      // Arteries[i]->printcGMPxt(fcGMP[i], tend, 0);
+      // Arteries[i]->printWSSxt(fWSS[i], tend, 0);
     }
-    Arteries[0]->printAxt(fA1, tend, 0);
-    Arteries[0]->printCxt(fC1, tend, 0);
+    // Arteries[0]->printAxt(fA1, tend, 0);
+    // Arteries[0]->printCxt(fC1, tend, 0);
 
 
     // The time within each print is increased.
@@ -309,6 +336,39 @@ int main(int argc, char *argv[])
     tend   = tend + Deltat; // The current ending time is increased by Deltat.
   }
   fprintf(stdout,"\n");
+
+  // Solves the NO equations until time equals tend.
+  solver_NO (Arteries, NOtstart, NOtend, k);
+  NOtstart = NOtend;
+  NOtend = NOtend + Deltat;
+
+
+  fprintf (stdout,"plots NO start\n");
+  // The loop is continued until the final time
+  // is reached. If one wants to make a plot of
+  // the solution versus x, tend is set to final-
+  // time in the above declaration.
+  while (NOtend <= NOfinaltime)
+  {
+    // Solves the equations until time equals tend.
+    solver_NO (Arteries, NOtstart, NOtend, k);
+    fprintf (stdout,".");
+
+    // call output member function:
+    for(int i=0;i<nbrves;++i)
+    {
+      Arteries[i]->printNOxt(fNO[i], NOtend, 0);
+      Arteries[i]->printCAxt(fCA[i], NOtend, 0);
+      Arteries[i]->printcGMPxt(fcGMP[i], NOtend, 0);
+    }
+
+
+    // The time within each print is increased.
+    NOtstart = NOtend;
+    NOtend   = NOtend + Deltat; // The current ending time is increased by Deltat.
+  }
+  fprintf(stdout,"\n");
+
 
 
   // The following statements is used when timing the simulation.
@@ -337,8 +397,20 @@ int main(int argc, char *argv[])
     string SuccessInfo2 = "Close "+to_string(j)+"q OK \n";
     string FailInfo2 = "Close "+to_string(j)+"q NOT OK \n";
     if (fclose(fq[i]) != EOF) fprintf(stdout, "%s", (SuccessInfo2).c_str()); else error("main.C", (FailInfo2).c_str());
+    string SuccessInfo3 = "Close "+to_string(j)+"a OK \n";
+    string FailInfo3 = "Close "+to_string(j)+"a NOT OK \n";
+    if (fclose(fa[i]) != EOF) fprintf(stdout, "%s", (SuccessInfo3).c_str()); else error("main.C", (FailInfo3).c_str());
+        string SuccessInfo4 = "Close "+to_string(j)+"NO OK \n";
+    string FailInfo4 = "Close "+to_string(j)+"NO NOT OK \n";
+    if (fclose(fNO[i]) != EOF) fprintf(stdout, "%s", (SuccessInfo4).c_str()); else error("main.C", (FailInfo4).c_str());
+        string SuccessInfo5 = "Close "+to_string(j)+"CA OK \n";
+    string FailInfo5 = "Close "+to_string(j)+"CA NOT OK \n";
+    if (fclose(fCA[i]) != EOF) fprintf(stdout, "%s", (SuccessInfo5).c_str()); else error("main.C", (FailInfo5).c_str());
+        string SuccessInfo6 = "Close "+to_string(j)+"cGMP OK \n";
+    string FailInfo6 = "Close "+to_string(j)+"cGMP NOT OK \n";
+    if (fclose(fcGMP[i]) != EOF) fprintf(stdout, "%s", (SuccessInfo6).c_str()); else error("main.C", (FailInfo6).c_str());
   }
-  if (fclose(fA1) != EOF) fprintf(stdout, "Close 1A OK\n"); else error("main.C", "Close 1A NOT OK");
-  if (fclose(fC1) != EOF) fprintf(stdout, "Close 1C OK\n"); else error("main.C", "Close 1C NOT OK");
+  // if (fclose(fA1) != EOF) fprintf(stdout, "Close 1A OK\n"); else error("main.C", "Close 1A NOT OK");
+  // if (fclose(fC1) != EOF) fprintf(stdout, "Close 1C OK\n"); else error("main.C", "Close 1C NOT OK");
   return 0;
 }
