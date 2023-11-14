@@ -70,7 +70,7 @@ public:
    *cGMP_new, *cGMP_old;       // linsuanjiqiudanbai
 double h_thickness,           // thickness by R_{middle}
   h_inner,
-  h_middle, *r_middle, *aa, *bb, *cc, AVEF;
+  h_middle, *r_middle, *aa, *bb, *cc, AVEcGMP, r0_middle;
 int num1,num2,numall;
 
   Tube (size_t _order, double Length,
@@ -233,6 +233,27 @@ inline double RNO_hyp(double WSS)
   return (2.13+457.5*(WSS/(WSS+35)))/1000;    // liu xiao 2014 hyp unit: nmol/L/s to mu mol/L/s
   // return 150*WSS/24;                  // liu xiao 2014 linear unit: mu mol/L/s
 }
+inline void increase_young()
+{
+  double alpha_E = 1.02;
+  for (int i=0; i<=N; i++)
+  {
+
+    fr [i]     = fr [i] * alpha_E;
+    frh[i]     = frh[i] * alpha_E;
+    dfrdr0 [i] = dfrdr0 [i] * alpha_E;
+    dfrdr0h[i] = dfrdr0h[i] * alpha_E;
+    p1 [i]     = p1 [i] * alpha_E;
+    p1h[i]     = p1h[i] * alpha_E;
+    dp1dr0 [i] = dp1dr0 [i] * alpha_E;
+    dp1dr0h[i] = dp1dr0h[i] * alpha_E;
+  }
+  frh[N+1]     = frh[N+1] * alpha_E;
+  dfrdr0h[N+1] = dfrdr0h[N+1] * alpha_E;
+  p1h[N+1]     = p1h[N+1] * alpha_E;
+  dp1dr0h[N+1] = dp1dr0h[N+1] * alpha_E;
+  return;
+}
 
 private:
   // The private function Q0 may only be accessed from the left boundary
@@ -245,5 +266,10 @@ void solver (Tube *Arteries[], double tstart, double tend, double k,
             const std::set<int> &ID_Out, 
             const std::set<int> &ID_Bif, 
             const std::set<int> &ID_Merge);
-void solver_NO (Tube *Arteries[], double tstart, double tend, double k);
+void solver_NO (Tube *Arteries[], double tstart, double tend, double k,
+            const std::set<int> &ID_Out, 
+            const std::set<int> &ID_Bif, 
+            const std::set<int> &ID_Merge);
+void init_solver_NO (Tube *Arteries[]);
+void increase_young_module (Tube *Arteries[]);
 #endif

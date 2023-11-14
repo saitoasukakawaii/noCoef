@@ -30,7 +30,7 @@
 #include <ctime>
 #include <algorithm>
 #include <set>
-
+#include <omp.h>
 #include "tools.h"
 #include "arteries.h"
 
@@ -130,11 +130,11 @@ Tube :: Tube (size_t _order, double Length,
 
   double rgLr  = 4/3/rho/g/Lr;
   double rgLr2 = 4/3/rho/g/Lr2;
-  double r0_middle = (rbot+rtop)*0.5;
+  r0_middle = (rbot+rtop)*0.5;
   h_thickness = h_blanco2014(r0_middle);
   h_inner = h_thickness*0.1;
   h_middle = h_thickness*0.6;
-  // num1 = int(h_inner/dr)+1;
+  num1 = int(h_inner/dr)+1;
   num2 = int(h_middle/dr)+1;
   numall = int((h_middle+h_inner)/dr)+1;
 
@@ -366,7 +366,7 @@ void Tube :: printNOxt (FILE *fd, double t, int offset)
   for (int i=0; i<N; i++)
   {
     fprintf (fd, "%13.10f %13.10f %15.10f\n",
-             t*Lr3/q, (i+offset)*h*Lr, nno_new[i]*nno_0);
+             t*Lr3/q, ((i+offset)*dr+r0_middle)*Lr, nno_new[i]*nno_0);
   }
 }
 void Tube :: printCAxt (FILE *fd, double t, int offset)
@@ -375,7 +375,7 @@ void Tube :: printCAxt (FILE *fd, double t, int offset)
   for (int i=0; i<N; i++)
   {
     fprintf (fd, "%13.10f %13.10f %15.10f\n",
-             t*Lr3/q, (i+offset)*h*Lr, Cca_new[i]*Cca_th);
+             t*Lr3/q, ((i+offset)*dr+r0_middle)*Lr, Cca_new[i]*Cca_th);
   }
 }
 void Tube :: printcGMPxt (FILE *fd, double t, int offset)
@@ -384,7 +384,7 @@ void Tube :: printcGMPxt (FILE *fd, double t, int offset)
   for (int i=0; i<N; i++)
   {
     fprintf (fd, "%13.10f %13.10f %15.10f\n",
-             t*Lr3/q, (i+offset)*h*Lr, cGMP_new[i]*cGMP0);
+             t*Lr3/q, ((i+offset)*dr+r0_middle)*Lr, cGMP_new[i]*cGMP0);
   }
 }
 
@@ -709,6 +709,7 @@ void Tube :: init_tang()
       if (Cca_new[i]>1) heviside = 1; else heviside=0;
       cGMP_new[i] = gamma_cGMP*(Cca_new[i]-1)*heviside/alpha2_cGMP;
   }
+  AVEcGMP = 0.;
 }
 
 void Tube :: step_tang (double k)
@@ -755,12 +756,31 @@ void Tube :: step_tang (double k)
     if (Cca_new[i]>1) heviside = 1; else heviside=0;
     cGMP_new[i] = ( cGMP_old[i] + k*gamma_cGMP*(Cca_new[i]-1)*heviside ) / (1+k*alpha2_cGMP);
   }
-  AVEF = 0.0;
+  AVEcGMP = 0.0;
   for (int i=0;i<num2-1;++i)
   {
-    AVEF += (cGMP_new[i]*r_middle[numall-num2+i]+cGMP_new[i+1]*r_middle[numall-num2+i+1])*dr/2;
+    AVEcGMP += (cGMP_new[i]*r_middle[numall-num2+i]+cGMP_new[i+1]*r_middle[numall-num2+i+1])*dr/2;
   }
-  AVEF = AVEF*2/(sq(r_middle[numall-1])-sq(r_middle[numall-num2]));
+  AVEcGMP = AVEcGMP*2/(sq(r_middle[numall-1])-sq(r_middle[numall-num2]));
+  double alpha_E = 1+epsilon_cGMP*AVEcGMP;
+  fprintf(stdout, "AVEcGMP: %f\n", AVEcGMP);
+  fprintf(stdout, "alpha_E: %f\n", alpha_E);
+  for (int i=0; i<=N; i++)
+  {
+
+    fr [i]     = fr [i] * alpha_E;
+    frh[i]     = frh[i] * alpha_E;
+    dfrdr0 [i] = dfrdr0 [i] * alpha_E;
+    dfrdr0h[i] = dfrdr0h[i] * alpha_E;
+    p1 [i]     = p1 [i] * alpha_E;
+    p1h[i]     = p1h[i] * alpha_E;
+    dp1dr0 [i] = dp1dr0 [i] * alpha_E;
+    dp1dr0h[i] = dp1dr0h[i] * alpha_E;
+  }
+  frh[N+1]     = frh[N+1] * alpha_E;
+  dfrdr0h[N+1] = dfrdr0h[N+1] * alpha_E;
+  p1h[N+1]     = p1h[N+1] * alpha_E;
+  dp1dr0h[N+1] = dp1dr0h[N+1] * alpha_E;
 }
 // The left boundary (x=0) uses this function to model an inflow into
 // the system. The actual parameter given to the function is the model time.
@@ -1622,22 +1642,33 @@ void solver (Tube *Arteries[], double tstart, double tend, double k,
   }
 }
 
+void increase_young_module (Tube *Arteries[])
+{
+  for (int i=0; i<nbrves; i++)
+  {
+    Arteries[i] -> increase_young ();
+  }
+}
 
 void init_solver_NO (Tube *Arteries[])
 {
+  #pragma omp parallel for
   for (int i=0; i<nbrves; i++)
   {
     Arteries[i] -> init_tang ();
   }
 }
 
-void solver_NO (Tube *Arteries[], double tstart, double tend, double k)
+void solver_NO (Tube *Arteries[], double tstart, double tend, double k,
+            const std::set<int> &ID_Out, 
+            const std::set<int> &ID_Bif, 
+            const std::set<int> &ID_Merge)
 {
   // The following definitions only used when a variable time-stepping is
   // used.
 
   double t    = tstart;
-  // int qLnb = (int) fmod(t/k,tmstps);
+  int qLnb = (int) fmod(t/k,tmstps);
 
   // As long as we haven't passed the desired ending time do:
   while (t < tend)
@@ -1650,13 +1681,48 @@ void solver_NO (Tube *Arteries[], double tstart, double tend, double k)
       k = tend - t;
       printf("ERROR (arteries.C): Step-size changed, t+k=%10.15f, tend=%10.15f k=%10.15f kold=%10.15f\n",t+kold,tend,k,kold);
     }
+
+    // Check that the CFL-condition applies.
     for (int i=0; i<nbrves; i++)
     {
-      // Arteries[i] -> step_tang (k);
+      if (k > Arteries[i] -> CFL())
+      {
+        error("arteries.C","Step-size too large CFL-condition violated\n");
+      }
     }
+    #pragma omp parallel for
+    for (int i=0; i<nbrves; i++)
+    {
+      Arteries[i] -> step_tang (k);
+    }
+    // solve for interior points, by calling step.
+    for (int i=0; i<nbrves; i++)
+    {
+      Arteries[i] -> step (k);
+    }
+    // Update left and right boundaries, and the bifurcation points.
+    Arteries[0] -> bound_left(t+k, k, Period);
+    for (auto i: ID_Out)
+    {
+      Arteries[i] -> bound_right (qLnb, k, k/Arteries[i]->h, t);
+    }
+    for (auto i: ID_Bif)
+    {
+      double theta = k/Arteries[i]->h;
+	    double gamma = k/2;
+      Arteries[i] -> bound_bif_right (theta, gamma);
+    }
+    for (auto i: ID_Merge)
+    {
+      double theta = k/Arteries[i]->h;
+	    double gamma = k/2;
+      Arteries[i] -> bound_bif_left (theta, gamma);
+    }
+
 
     // Update the time and position within one period.
     t = t + k;
-    // qLnb = (qLnb + 1) % tmstps;
+    qLnb = (qLnb + 1) % tmstps;
   }
 }
+

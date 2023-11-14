@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
                                // is reached.
   // normal range of rmin of small vessel is 0.01~0.04
   double rm4 = 0.03;
-  int point = 8;
+  int point = 4;
   nbrves     = 55;             // The number of vessels in the network.
 
   string FileName = "topology55.txt";
@@ -96,11 +96,11 @@ int main(int argc, char *argv[])
   clock_t c1 = clock();        // Only used when timing the program.
   tstart     = 0.0;            // Starting time.
   finaltime  = 8*Period;       // Final end-time during a simulation.
-  tend       = 0*Period;       // Timestep before the first plot-point
+  tend       = 7*Period;       // Timestep before the first plot-point
                                // is reached.
-  NOtstart     = 0.0;            // Starting time.
+  NOtstart     = finaltime;            // Starting time.
   NOfinaltime  = 20*Period;       // Final end-time during a simulation.
-  NOtend       = 0*Period;       // Timestep before the first plot-point
+  NOtend       = finaltime + 0*Period;       // Timestep before the first plot-point
                                // is reached.
 
   // The number of vessels in the network is given when the governing array of
@@ -336,31 +336,31 @@ int main(int argc, char *argv[])
     tend   = tend + Deltat; // The current ending time is increased by Deltat.
   }
   fprintf(stdout,"\n");
+  fprintf(stdout,"increase young's module\n");
+  increase_young_module (Arteries);
 
-  // Solves the NO equations until time equals tend.
-  solver_NO (Arteries, NOtstart, NOtend, k);
-  NOtstart = NOtend;
-  NOtend = NOtend + Deltat;
-
-
-  fprintf (stdout,"plots NO start\n");
-  // The loop is continued until the final time
-  // is reached. If one wants to make a plot of
-  // the solution versus x, tend is set to final-
-  // time in the above declaration.
   while (NOtend <= NOfinaltime)
   {
     // Solves the equations until time equals tend.
-    solver_NO (Arteries, NOtstart, NOtend, k);
+    solver (Arteries, NOtstart, NOtend, k, ID_Out, ID_Bif, ID_Merge);
     fprintf (stdout,".");
+
+
+
 
     // call output member function:
     for(int i=0;i<nbrves;++i)
     {
-      Arteries[i]->printNOxt(fNO[i], NOtend, 0);
-      Arteries[i]->printCAxt(fCA[i], NOtend, 0);
-      Arteries[i]->printcGMPxt(fcGMP[i], NOtend, 0);
+      Arteries[i]->printPxt(fp[i], NOtend, 0);
+      Arteries[i]->printQxt(fq[i], NOtend, 0);
+      Arteries[i]->printAxt(fa[i], NOtend, 0);
+      // Arteries[i]->printNOxt(fNO[i], tend, 0);
+      // Arteries[i]->printCAxt(fCA[i], tend, 0);
+      // Arteries[i]->printcGMPxt(fcGMP[i], tend, 0);
+      // Arteries[i]->printWSSxt(fWSS[i], tend, 0);
     }
+    // Arteries[0]->printAxt(fA1, tend, 0);
+    // Arteries[0]->printCxt(fC1, tend, 0);
 
 
     // The time within each print is increased.
@@ -368,6 +368,41 @@ int main(int argc, char *argv[])
     NOtend   = NOtend + Deltat; // The current ending time is increased by Deltat.
   }
   fprintf(stdout,"\n");
+  // init_solver_NO (Arteries);
+  // // Solves the NO equations until time equals tend.
+  // solver_NO (Arteries, NOtstart, NOtend, k, ID_Out, ID_Bif, ID_Merge);
+  // NOtstart = NOtend;
+  // NOtend = NOtend + Deltat;
+
+
+  // fprintf (stdout,"plots NO start\n");
+  // // The loop is continued until the final time
+  // // is reached. If one wants to make a plot of
+  // // the solution versus x, tend is set to final-
+  // // time in the above declaration.
+  // while (NOtend <= NOfinaltime)
+  // {
+  //   // Solves the equations until time equals tend.
+  //   solver_NO (Arteries, NOtstart, NOtend, k, ID_Out, ID_Bif, ID_Merge);
+  //   fprintf (stdout,".");
+
+  //   // call output member function:
+  //   for(int i=0;i<nbrves;++i)
+  //   {
+  //     Arteries[i]->printNOxt(fNO[i], NOtend, 0);
+  //     fflush(fNO[i]);
+  //     Arteries[i]->printCAxt(fCA[i], NOtend, 0);
+  //     fflush(fCA[i]);
+  //     Arteries[i]->printcGMPxt(fcGMP[i], NOtend, 0);
+  //     fflush(fcGMP[i]);
+  //   }
+
+
+  //   // The time within each print is increased.
+  //   NOtstart = NOtend;
+  //   NOtend   = NOtend + Deltat; // The current ending time is increased by Deltat.
+  // }
+  // fprintf(stdout,"\n");
 
 
 
