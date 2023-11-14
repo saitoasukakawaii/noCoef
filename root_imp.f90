@@ -360,6 +360,11 @@ implicit none
   Y_hat = 1/Z_om/Period
   ! y_xt   = real(IFFT(bitreverse(FFTshift(Y_hat)/Period)),lng) ! maybe wrong for sign
 
+  call dfftw_plan_dft_1d(plan,tmstps,Y_hat,out,FFTW_BACKWARD,FFTW_ESTIMATE)
+  call dfftw_execute_dft(plan, Y_hat, out)
+  call dfftw_destroy_plan(plan)
+  y_xt = real(out, lng)
+
   write (buffer(1),'(I4)') floor(1000*r_root)
   write (buffer(2),'(I4)') floor(1000*r_min)
   write (buffer(3),'(I6)') tmstps
@@ -374,11 +379,7 @@ implicit none
   end do 
   close(f1)
  
-  call dfftw_plan_dft_1d(plan,tmstps,Y_hat,out,FFTW_BACKWARD,FFTW_ESTIMATE)
-  call dfftw_execute_dft(plan, Y_hat, out)
-  call dfftw_destroy_plan(plan)
   
-  y_xt = real(out, lng)
   
   write (buffer(1),'(I4)') floor(1000*r_root)
   write (buffer(2),'(I4)') floor(1000*r_min)

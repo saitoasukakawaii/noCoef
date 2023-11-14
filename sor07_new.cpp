@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
   clock_t c1 = clock();        // Only used when timing the program.
   tstart     = 0.0;            // Starting time.
   finaltime  = 10*Period;       // Final end-time during a simulation.
-  tend       = 0*Period;       // Timestep before the first plot-point
+  tend       = 9*Period;       // Timestep before the first plot-point
                                // is reached.
 
   // The number of vessels in the network is given when the governing array of
