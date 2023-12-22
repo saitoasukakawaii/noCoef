@@ -19,7 +19,7 @@
 
 int    nbrves, N_aorta;               // Number of vessels in the tree.
 
-int    tmstps = 16384,                 // The number of timesteps per period.
+int    tmstps = 8192,                 // The number of timesteps per period. 16384
        plts   = 1024;                 // Number of plots per period.
 
 const char *CO_filename = "input.dat";     // Input flow file at the heart.

@@ -154,4 +154,41 @@ function qnew=init(t, dt, method)
             +a57*sin(2*57*pi*t/T);
          qnew = qnew*1e6;
     end
+    % from jcj single peak
+	if method ==8
+		q0=0.0;
+		qmax=500;
+		a=2.0/3.0;
+		T0=1.0;
+		if(t<=T0)
+			if(t<=a)
+                if(t<0.3)
+				    fi=3*pi*t-1.4142;
+				    qnew=q0+qmax*(0.251+0.290*(cos(fi)+0.97*cos(2*fi)+0.47*cos(3*fi)+0.14*cos(4*fi)));
+                else
+                    qnew=-0.0995668201965449;
+                end
+            else
+				fi=3*pi*a-1.4142;
+				qnew=q0+qmax*(0.251+0.290*(cos(fi)+0.97*cos(2*fi)+0.47*cos(3*fi)+0.14*cos(4*fi)));
+			end
+		else
+			temp=t;
+			while(temp>T0)
+				temp=temp-T0;
+			end
+			if(temp<=a)
+                if(temp<0.3)
+				    fi=3*pi*temp-1.4142
+				    qnew=q0+qmax*(0.251+0.290*(cos(fi)+0.97*cos(2*fi)+0.47*cos(3*fi)+0.14*cos(4*fi)));
+                else
+                    qnew=-0.0995668201965449;
+                end
+			else
+				fi=3*pi*a-1.4142
+				qnew=q0+qmax*(0.251+0.290*(cos(fi)+0.97*cos(2*fi)+0.47*cos(3*fi)+0.14*cos(4*fi)));
+
+			end
+        end
+    end
 end
