@@ -763,8 +763,8 @@ void Tube :: step_tang (double k)
   }
   AVEcGMP = AVEcGMP*2/(sq(r_middle[numall-1])-sq(r_middle[numall-num2]));
   double alpha_E = 1+epsilon_cGMP*AVEcGMP;
-  fprintf(stdout, "AVEcGMP: %f\n", AVEcGMP);
-  fprintf(stdout, "alpha_E: %f\n", alpha_E);
+  fprintf(stderr, "AVEcGMP: %f\n", AVEcGMP);
+  fprintf(stderr, "alpha_E: %f\n", alpha_E);
   for (int i=0; i<=N; i++)
   {
 
