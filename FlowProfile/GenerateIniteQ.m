@@ -2,7 +2,7 @@ clc;clear all;
 dt=1/8192;  % 8192 16384
 t=0:dt:1.0;
 for i=1:length(t)
-   y(i) = init(t(i), dt, 8);
+   y(i) = init(t(i), dt, 9);
 end
 plot(t,y);
 writematrix(y',"input.dat")
